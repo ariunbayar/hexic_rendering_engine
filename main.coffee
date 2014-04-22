@@ -24,26 +24,19 @@ HEXAGON = [
 
 
 
-# Pixel model
-Pixel = Backbone.Model.extend(
+Pixel = Backbone.Model.extend
   defaults:
     element: null
-    x: 0
-    y: 0
-    size: 3
-    color: "#000000"
-  set: (color) ->
-    return @color = color
-  get: ->
-    return @
-  )
-
-Tools =
-  drawPixel: (container, x, y, size, color) ->
-    x = parseInt(x)
-    y = parseInt(y)
-    style = 'stroke-width:' + size + '; stroke:' + color + ';'
-    pixel = container.append('line')
+    x: null
+    y: null
+    size: null
+    color: null
+  initialize: ->
+    x = parseInt(@get('x'))
+    y = parseInt(@get('y'))
+    size = @get('size')
+    style = 'stroke-width:' + size + '; stroke:' + @get('color') + ';'
+    pixel = @get('element').append('line')
       .attr('x1', x * size)
       .attr('y1', (y + 0.5) * size)
       .attr('x2', (x + 1) * size)
@@ -72,7 +65,12 @@ Hexagon = Backbone.Model.extend
     for y, row of HEXAGON
       for x, dot of row
         if dot of colors
-          Tools.drawPixel(cell, x, y, PIXEL_SIZE, colors[dot])
+          @pixels = new Pixel
+                      element: cell
+                      x: x
+                      y: y
+                      size: PIXEL_SIZE
+                      color: colors[dot]
     pixels = @get('pixels')
     pixels.push(cell)
     @set('pixels', pixels)
@@ -173,9 +171,3 @@ window.tick = ->
     board[0][1] = [1, 27]
   #if step == 2
   RenderEngine.updateBoard(board)
-
-
-a = new Pixel()
-console.log a.get()
-a.set('color': "#ff0000")
-console.log a.get()
