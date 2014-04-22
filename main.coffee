@@ -182,7 +182,7 @@ board = [
 RenderEngine.init(board)
 
 step = 0
-setInterval('tick()', 5000)
+setInterval('tick()', 2000)
 window.tick = ->
   step++
   if step == 1
@@ -190,6 +190,12 @@ window.tick = ->
     board[2][3] = [2, 30]
   if step == 2
     board[0][2] = [1, 10]
+  if step > 2
+    board[0][1] = [0, 10]
+    board[2][3] = [0, 10]
+    board[0][2] = [0, 10]
+    step = 0
+
   RenderEngine.updateBoard(board)
 
 window.RE = RenderEngine  # TODO remove. debug only
