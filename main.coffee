@@ -32,9 +32,7 @@ Tools =
       .attr('style', style)
     return pixel
 
-hexagon = (board_el, coord) ->
-  stroke = '#ff0000'
-  fill = '#ff9999'
+hexagon = (board_el, coord, stroke, fill) ->
   map = [
     "        ****        ",
     "      **0000**      ",
@@ -82,7 +80,8 @@ Hexagon = Backbone.Model.extend
       fill: null
     pixels: []
   initialize: ->
-    hexagon(@get('container'), @get('coord'))
+    color = @get('color')
+    hexagon(@get('container'), @get('coord'), color.stroke, color.fill)
     @on("change:color", @colorChanged, @)
   colorChanged: ->
     console.log "color changed to " + @get('color')
@@ -104,7 +103,8 @@ board = [
 ]
 
 user_colors =
-  1:  {stroke:'#ff0000', fill: '#ff9999'}
+  0: {stroke:'#cccccc', fill: '#eeeeee'}
+  1: {stroke:'#ff0000', fill: '#ff9999'}
   2: {stroke:'#0000ff', fill: '#9999ff'}
 
 for y of board
