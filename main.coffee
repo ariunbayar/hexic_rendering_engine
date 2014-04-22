@@ -8,10 +8,6 @@ RenderEngine =
       '3': '#acacac'
       '4': '#b8b8b8'
       '5': '#c4c4c4'
-      '6': '#cfcfcf'
-      '7': '#dbdbdb'
-      '8': '#e7e7e7'
-      '9': '#f3f3f3'
     1:
       '*': '#e60000'
       '0': '#ff6666'
@@ -68,14 +64,16 @@ RenderEngine =
         coord: @get('coord')
         color: @get('colors')
       @set('element', el_hexagon)
-      @on("change:color", @colorChanged, @)
+      @on("change:user_id", @userChanged, @)
+    userChanged: ->
+      @get('element').set('color', @get('colors'))
 
   Hexagon: Backbone.Model.extend
     defaults:
       container: null
       coord: null
       color: null
-      pixels: []
+      pixels: null
     initialize: ->
       colors = @get('color')
       width = 20 * RenderEngine.PIXEL_SIZE
@@ -88,25 +86,34 @@ RenderEngine =
       pos_y = height * hex_y
       cell = @get('container').append('svg:g')
       cell.attr('transform',  'translate(' +  pos_x + ', ' + pos_y + ')')
+      pixels = []
+      for y, row of RenderEngine.HEXAGON
+        pixel_row = []
+        for x, dot of row
+          if dot of colors
+            pixel = new RenderEngine.Pixel
+              container: cell
+              x: x
+              y: y
+              size: RenderEngine.PIXEL_SIZE
+              color: colors[dot]
+            pixel_row.push(pixel)
+          else
+            pixel_row.push(null)
+        pixels.push(pixel_row)
+      @set('pixels', pixels)
+      @on("change:color", @colorChanged, @)
+    colorChanged: ->
+      colors = @get('color')
+      pixels = @get('pixels')
       for y, row of RenderEngine.HEXAGON
         for x, dot of row
           if dot of colors
-            @pixels = new RenderEngine.Pixel
-                        element: cell
-                        x: x
-                        y: y
-                        size: RenderEngine.PIXEL_SIZE
-                        color: colors[dot]
-      pixels = @get('pixels')
-      pixels.push(cell)
-      @set('pixels', pixels)
-
-      @on("change:color", @colorChanged, @)
-    colorChanged: ->
-      console.log "color changed to " + @get('color')
+            pixels[y][x].set('color', colors[dot])
 
   Pixel: Backbone.Model.extend
     defaults:
+      container: null
       element: null
       x: null
       y: null
@@ -116,14 +123,18 @@ RenderEngine =
       x = parseInt(@get('x'))
       y = parseInt(@get('y'))
       size = @get('size')
-      style = 'stroke-width:' + size + '; stroke:' + @get('color') + ';'
-      pixel = @get('element').append('line')
+      pixel = @get('container').append('line')
         .attr('x1', x * size)
         .attr('y1', (y + 0.5) * size)
         .attr('x2', (x + 1) * size)
         .attr('y2', (y + 0.5) * size)
-        .attr('style', style)
-      return pixel
+        .style('stroke-width', size)
+        .style('stroke', @get('color'))
+      @set('element', pixel)
+      @on("change:color", @colorChanged, @)
+    colorChanged: ->
+      pixel = @get('element')
+      pixel.transition().style('stroke', @get('color'))
 
   init: (board) ->
     svg = d3.select('body').append('svg')
@@ -145,11 +156,17 @@ RenderEngine =
       RenderEngine.board.push(row)
 
   updateBoard: (board) ->
-    return
     for y of board
       for x of board[y]
-        #RenderEngine.board[y][x] =
         [user_id, power] = board[y][x]
+        cell = RenderEngine.board[y][x]
+        if cell.get('user_id') != user_id
+          cell.set('colors', RenderEngine.user_colors[user_id])
+          cell.set('power', power)
+          cell.set('user_id', user_id)
+        else if cell.get('power') != power
+          cell.set('power', power)
+
 
 ###
 # board - Two dimentional array. Each item should be formatted as
@@ -165,10 +182,14 @@ board = [
 RenderEngine.init(board)
 
 step = 0
-#setInterval('tick()', 5000)
+setInterval('tick()', 5000)
 window.tick = ->
   step++
   if step == 1
     board[0][1] = [1, 27]
-  #if step == 2
+    board[2][3] = [2, 30]
+  if step == 2
+    board[0][2] = [1, 10]
   RenderEngine.updateBoard(board)
+
+window.RE = RenderEngine  # TODO remove. debug only
