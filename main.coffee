@@ -5,6 +5,20 @@ svg = d3.select('body')
 
 PIXEL_SIZE = 5
 
+# Pixel model
+Pixel = Backbone.Model.extend(
+  defaults:
+    element: null
+    x: 0
+    y: 0
+    size: 3
+    color: "#000000"
+  set: (color) ->
+    return @color = color
+  get: ->
+    return @
+  )
+
 Tools =
   drawPixel: (container, x, y, size, color) ->
     x = parseInt(x)
@@ -105,3 +119,8 @@ for y of board
       user_id: user_id
       location: [x, y]
     )
+
+a = new Pixel()
+console.log a.get()
+a.set('color': "#ff0000")
+console.log a.get()
