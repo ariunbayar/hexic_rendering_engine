@@ -56,23 +56,6 @@ Tools =
       .attr('style', style)
     return pixel
 
-hexagon = (board_el, coord, colors) ->
-  width = 20 * PIXEL_SIZE
-  height = 16 * PIXEL_SIZE
-  [hex_x, hex_y] = coord
-  hex_x = parseInt(hex_x)
-  hex_y = parseInt(hex_y)
-  offset_x = if hex_y % 2 then .5 else 0
-  pos_x = width * (hex_x + offset_x)
-  pos_y = height * hex_y
-  cell = board_el.append('svg:g')
-  cell.attr('transform',  'translate(' +  pos_x + ', ' + pos_y + ')')
-  for y, row of HEXAGON
-    for x, dot of row
-      if dot of colors
-        Tools.drawPixel(cell, x, y, PIXEL_SIZE, colors[dot])
-  return cell
-
 Hexagon = Backbone.Model.extend
   defaults:
     container: null
@@ -80,7 +63,24 @@ Hexagon = Backbone.Model.extend
     color: null
     pixels: []
   initialize: ->
-    hexagon(@get('container'), @get('coord'), @get('color'))
+    colors = @get('color')
+    width = 20 * PIXEL_SIZE
+    height = 16 * PIXEL_SIZE
+    [hex_x, hex_y] = @get('coord')
+    hex_x = parseInt(hex_x)
+    hex_y = parseInt(hex_y)
+    offset_x = if hex_y % 2 then .5 else 0
+    pos_x = width * (hex_x + offset_x)
+    pos_y = height * hex_y
+    cell = @get('container').append('svg:g')
+    cell.attr('transform',  'translate(' +  pos_x + ', ' + pos_y + ')')
+    for y, row of HEXAGON
+      for x, dot of row
+        if dot of colors
+          Tools.drawPixel(cell, x, y, PIXEL_SIZE, colors[dot])
+    pixels = @get('pixels')
+    pixels.push(cell)
+    @set('pixels', pixels)
     @on("change:color", @colorChanged, @)
   colorChanged: ->
     console.log "color changed to " + @get('color')
