@@ -4,6 +4,30 @@ svg = d3.select('body')
     .attr('height', 400)
 
 PIXEL_SIZE = 5
+HEXAGON = [
+  "        ****        ",
+  "      **0110**      ",
+  "    **00111100**    ",
+  "  **000112211000**  ",
+  "**0000112222110000**",
+  "*000011223322110000*",
+  "*000112233332211000*",
+  "*001122334433221100*",
+  "*011223344443322110*",
+  "*112233445544332211*",
+  "*112233445544332211*",
+  "*011223344443322110*",
+  "*001122334433221100*",
+  "*000112233332211000*",
+  "*000011223322110000*",
+  "**0000112222110000**",
+  "  **000112211000**  ",
+  "    **00111100**    ",
+  "      **0110**      ",
+  "        ****        ",
+]
+
+
 
 # Pixel model
 Pixel = Backbone.Model.extend(
@@ -32,29 +56,7 @@ Tools =
       .attr('style', style)
     return pixel
 
-hexagon = (board_el, coord, stroke, fill) ->
-  map = [
-    "        ****        ",
-    "      **0000**      ",
-    "    **00000000**    ",
-    "  **000000000000**  ",
-    "**0000000000000000**",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "*000000000000000000*",
-    "**0000000000000000**",
-    "  **000000000000**  ",
-    "    **00000000**    ",
-    "      **0000**      ",
-    "        ****        ",
-  ]
+hexagon = (board_el, coord, colors) ->
   width = 20 * PIXEL_SIZE
   height = 16 * PIXEL_SIZE
   [hex_x, hex_y] = coord
@@ -63,25 +65,22 @@ hexagon = (board_el, coord, stroke, fill) ->
   offset_x = if hex_y % 2 then .5 else 0
   pos_x = width * (hex_x + offset_x)
   pos_y = height * hex_y
-  cell = board_el.append('svg:g').attr('transform',  'translate(' +  pos_x + ', ' + pos_y + ')')
-  for y, row of map
+  cell = board_el.append('svg:g')
+  cell.attr('transform',  'translate(' +  pos_x + ', ' + pos_y + ')')
+  for y, row of HEXAGON
     for x, dot of row
-      if dot != " "
-        color = if dot == "0" then fill else stroke
-        Tools.drawPixel(cell, x, y, PIXEL_SIZE, color)
+      if dot of colors
+        Tools.drawPixel(cell, x, y, PIXEL_SIZE, colors[dot])
   return cell
 
 Hexagon = Backbone.Model.extend
   defaults:
     container: null
     coord: null
-    color:
-      stroke: null
-      fill: null
+    color: null
     pixels: []
   initialize: ->
-    color = @get('color')
-    hexagon(@get('container'), @get('coord'), color.stroke, color.fill)
+    hexagon(@get('container'), @get('coord'), @get('color'))
     @on("change:color", @colorChanged, @)
   colorChanged: ->
     console.log "color changed to " + @get('color')
@@ -103,9 +102,34 @@ board = [
 ]
 
 user_colors =
-  0: {stroke:'#cccccc', fill: '#eeeeee'}
-  1: {stroke:'#ff0000', fill: '#ff9999'}
-  2: {stroke:'#0000ff', fill: '#9999ff'}
+  0:
+    '*': '#7a7a7a'
+    '0': '#888888'
+    '1': '#949494'
+    '2': '#a0a0a0'
+    '3': '#acacac'
+    '4': '#b8b8b8'
+    '5': '#c4c4c4'
+    '6': '#cfcfcf'
+    '7': '#dbdbdb'
+    '8': '#e7e7e7'
+    '9': '#f3f3f3'
+  1:
+    '*': '#e60000'
+    '0': '#ff6666'
+    '1': '#ff8080'
+    '2': '#ff9999'
+    '3': '#ffb2b2'
+    '4': '#ffcccc'
+    '5': '#ffe6e6'
+  2:
+    '*': '#0000e6'
+    '0': '#6666ff'
+    '1': '#8080ff'
+    '2': '#9999ff'
+    '3': '#b2b2ff'
+    '4': '#ccccff'
+    '5': '#e6e6ff'
 
 for y of board
   for x of board[y]
