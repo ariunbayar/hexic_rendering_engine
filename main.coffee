@@ -1,19 +1,22 @@
 svg = d3.select('body')
   .append('svg')
-    .attr('width', 400)
+    .attr('width', 500)
     .attr('height', 400)
 
-PIXEL_SIZE = 3
+PIXEL_SIZE = 5
 
-pixel_at = (container, x, y, color) ->
-  x = parseInt(x)
-  y = parseInt(y)
-  container.append('line')
-    .attr('x1', x * PIXEL_SIZE)
-    .attr('y1', (y + 0.5) * PIXEL_SIZE)
-    .attr('x2', (x + 1) * PIXEL_SIZE)
-    .attr('y2', (y + 0.5) * PIXEL_SIZE)
-    .attr('style', 'stroke-width:' + PIXEL_SIZE + '; stroke:' + color)
+Tools =
+  drawPixel: (container, x, y, size, color) ->
+    x = parseInt(x)
+    y = parseInt(y)
+    style = 'stroke-width:' + size + '; stroke:' + color + ';'
+    pixel = container.append('line')
+      .attr('x1', x * size)
+      .attr('y1', (y + 0.5) * size)
+      .attr('x2', (x + 1) * size)
+      .attr('y2', (y + 0.5) * size)
+      .attr('style', style)
+    return pixel
 
 hexagon = (board_el, coord) ->
   stroke = '#ff0000'
@@ -22,7 +25,7 @@ hexagon = (board_el, coord) ->
     "        ****        ",
     "      **0000**      ",
     "    **00000000**    ",
-    "  **0000     000**  ",
+    "  **000000000000**  ",
     "**0000000000000000**",
     "*000000000000000000*",
     "*000000000000000000*",
@@ -52,7 +55,8 @@ hexagon = (board_el, coord) ->
   for y, row of map
     for x, dot of row
       if dot != " "
-        pixel_at(cell, x, y, if dot == "0" then fill else stroke)
+        color = if dot == "0" then fill else stroke
+        Tools.drawPixel(cell, x, y, PIXEL_SIZE, color)
   return cell
 
 Cell = Backbone.Model.extend(
@@ -80,19 +84,3 @@ for y of board
       user_id: board[y][x]
       location: [x, y]
     )
-
-console.log "hello!"
-
-
-a = new Hexagon(1, 3)
-
-
-cell = {
-  element: new Hexagon(1, 3, "#f00")
-  power: 10
-  user_id: user1.id
-  color: "#f00"
-  location: [1, 3]
-}
-
-cell.attack("right-bottom")
