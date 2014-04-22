@@ -1,4 +1,4 @@
-hexic_rendering_engine
+hexic rendering engine
 ======================
 
 Rendering engine for hexic
