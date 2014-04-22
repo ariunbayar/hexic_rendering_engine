@@ -59,7 +59,18 @@ hexagon = (board_el, coord) ->
         Tools.drawPixel(cell, x, y, PIXEL_SIZE, color)
   return cell
 
-Cell = Backbone.Model.extend(
+Hexagon = Backbone.Model.extend
+  defaults:
+    container: null
+    coord: null
+    color: null
+    pixels: []
+  initialize: ->
+    @on("change:color", @colorChanged, @)
+  colorChanged: ->
+    console.log "color changed to " + @get('color')
+
+Cell = Backbone.Model.extend
   defaults:
     element: null
     power: 0
@@ -67,7 +78,6 @@ Cell = Backbone.Model.extend(
     location: null
   hasCell: ->
     return @.get('element') != null
-  )
 
 board = [
   [1, 0, 0, 0],
@@ -76,11 +86,22 @@ board = [
   [0, 0, 0, 2],
 ]
 
+###
 for y of board
   for x of board[y]
     board[y][x] = new Cell(
-      element: hexagon(svg, [x, y])
+      element: new Hexagon(
+        container: svg
+        coord: [x, y]
+      )
       power: 10
       user_id: board[y][x]
       location: [x, y]
     )
+###
+
+h = new Hexagon
+  container: svg
+  coord: [0, 0]
+  color: "#0000ff"
+h.set('color', '#9999ff')
