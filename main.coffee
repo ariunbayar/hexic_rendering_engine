@@ -66,6 +66,7 @@ Hexagon = Backbone.Model.extend
     color: null
     pixels: []
   initialize: ->
+    hexagon(@get('container'), @get('coord'))
     @on("change:color", @colorChanged, @)
   colorChanged: ->
     console.log "color changed to " + @get('color')
@@ -86,22 +87,17 @@ board = [
   [0, 0, 0, 2],
 ]
 
-###
 for y of board
   for x of board[y]
     board[y][x] = new Cell(
       element: new Hexagon(
         container: svg
         coord: [x, y]
+        color:
+          stroke: '#0000ff'
+          fill:   '#9999ff'
       )
       power: 10
       user_id: board[y][x]
       location: [x, y]
     )
-###
-
-h = new Hexagon
-  container: svg
-  coord: [0, 0]
-  color: "#0000ff"
-h.set('color', '#9999ff')
