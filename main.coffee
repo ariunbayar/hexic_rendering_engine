@@ -1,99 +1,4 @@
-PIXEL_SIZE = 5
-HEXAGON = [
-  "        ****        ",
-  "      **0110**      ",
-  "    **00111100**    ",
-  "  **000112211000**  ",
-  "**0000112222110000**",
-  "*000011223322110000*",
-  "*000112233332211000*",
-  "*001122334433221100*",
-  "*011223344443322110*",
-  "*112233445544332211*",
-  "*112233445544332211*",
-  "*011223344443322110*",
-  "*001122334433221100*",
-  "*000112233332211000*",
-  "*000011223322110000*",
-  "**0000112222110000**",
-  "  **000112211000**  ",
-  "    **00111100**    ",
-  "      **0110**      ",
-  "        ****        ",
-]
-
-
-
-Pixel = Backbone.Model.extend
-  defaults:
-    element: null
-    x: null
-    y: null
-    size: null
-    color: null
-  initialize: ->
-    x = parseInt(@get('x'))
-    y = parseInt(@get('y'))
-    size = @get('size')
-    style = 'stroke-width:' + size + '; stroke:' + @get('color') + ';'
-    pixel = @get('element').append('line')
-      .attr('x1', x * size)
-      .attr('y1', (y + 0.5) * size)
-      .attr('x2', (x + 1) * size)
-      .attr('y2', (y + 0.5) * size)
-      .attr('style', style)
-    return pixel
-
-Hexagon = Backbone.Model.extend
-  defaults:
-    container: null
-    coord: null
-    color: null
-    pixels: []
-  initialize: ->
-    colors = @get('color')
-    width = 20 * PIXEL_SIZE
-    height = 16 * PIXEL_SIZE
-    [hex_x, hex_y] = @get('coord')
-    hex_x = parseInt(hex_x)
-    hex_y = parseInt(hex_y)
-    offset_x = if hex_y % 2 then .5 else 0
-    pos_x = width * (hex_x + offset_x)
-    pos_y = height * hex_y
-    cell = @get('container').append('svg:g')
-    cell.attr('transform',  'translate(' +  pos_x + ', ' + pos_y + ')')
-    for y, row of HEXAGON
-      for x, dot of row
-        if dot of colors
-          @pixels = new Pixel
-                      element: cell
-                      x: x
-                      y: y
-                      size: PIXEL_SIZE
-                      color: colors[dot]
-    pixels = @get('pixels')
-    pixels.push(cell)
-    @set('pixels', pixels)
-
-    @on("change:color", @colorChanged, @)
-  colorChanged: ->
-    console.log "color changed to " + @get('color')
-
-Cell = Backbone.Model.extend
-  defaults:
-    element: null
-    power: 0
-    user_id: null
-    location: null
-  hasCell: ->
-    return @.get('element') != null
-
-
 RenderEngine =
-  ###
-  # board - Two dimentional array. Each item should be formatted as
-  #         [<user_id>,<power>]
-  ###
   user_colors:
     0:
       '*': '#7a7a7a'
@@ -124,7 +29,101 @@ RenderEngine =
       '4': '#ccccff'
       '5': '#e6e6ff'
 
+  PIXEL_SIZE = 5
+
+  HEXAGON = ["        ****        ",
+             "      **0110**      ",
+             "    **00111100**    ",
+             "  **000112211000**  ",
+             "**0000112222110000**",
+             "*000011223322110000*",
+             "*000112233332211000*",
+             "*001122334433221100*",
+             "*011223344443322110*",
+             "*112233445544332211*",
+             "*112233445544332211*",
+             "*011223344443322110*",
+             "*001122334433221100*",
+             "*000112233332211000*",
+             "*000011223322110000*",
+             "**0000112222110000**",
+             "  **000112211000**  ",
+             "    **00111100**    ",
+             "      **0110**      ",
+             "        ****        ",]
+
   board: null
+
+  Cell: Backbone.Model.extend
+    defaults:
+      container: null
+      element: null
+      power: 0
+      user_id: null
+      coord: null
+      colors: null
+    initialize: ->
+      el_hexagon = new RenderEngine.Hexagon
+        container: @get('container')
+        coord: @get('coord')
+        color: @get('colors')
+      @set('element', el_hexagon)
+      @on("change:color", @colorChanged, @)
+
+  Hexagon: Backbone.Model.extend
+    defaults:
+      container: null
+      coord: null
+      color: null
+      pixels: []
+    initialize: ->
+      colors = @get('color')
+      width = 20 * RenderEngine.PIXEL_SIZE
+      height = 16 * RenderEngine.PIXEL_SIZE
+      [hex_x, hex_y] = @get('coord')
+      hex_x = parseInt(hex_x)
+      hex_y = parseInt(hex_y)
+      offset_x = if hex_y % 2 then .5 else 0
+      pos_x = width * (hex_x + offset_x)
+      pos_y = height * hex_y
+      cell = @get('container').append('svg:g')
+      cell.attr('transform',  'translate(' +  pos_x + ', ' + pos_y + ')')
+      for y, row of RenderEngine.HEXAGON
+        for x, dot of row
+          if dot of colors
+            @pixels = new RenderEngine.Pixel
+                        element: cell
+                        x: x
+                        y: y
+                        size: RenderEngine.PIXEL_SIZE
+                        color: colors[dot]
+      pixels = @get('pixels')
+      pixels.push(cell)
+      @set('pixels', pixels)
+
+      @on("change:color", @colorChanged, @)
+    colorChanged: ->
+      console.log "color changed to " + @get('color')
+
+  Pixel: Backbone.Model.extend
+    defaults:
+      element: null
+      x: null
+      y: null
+      size: null
+      color: null
+    initialize: ->
+      x = parseInt(@get('x'))
+      y = parseInt(@get('y'))
+      size = @get('size')
+      style = 'stroke-width:' + size + '; stroke:' + @get('color') + ';'
+      pixel = @get('element').append('line')
+        .attr('x1', x * size)
+        .attr('y1', (y + 0.5) * size)
+        .attr('x2', (x + 1) * size)
+        .attr('y2', (y + 0.5) * size)
+        .attr('style', style)
+      return pixel
 
   init: (board) ->
     svg = d3.select('body').append('svg')
@@ -136,14 +135,12 @@ RenderEngine =
       row = []
       for x of board[y]
         [user_id, power] = board[y][x]
-        cell = new Cell
-          element: new Hexagon
-            container: svg
-            coord: [x, y]
-            color: RenderEngine.user_colors[user_id]
+        cell = new RenderEngine.Cell
           power: power
           user_id: user_id
-          location: [x, y]
+          coord: [x, y]
+          container: svg
+          colors: RenderEngine.user_colors[user_id]
         row.push(cell)
       RenderEngine.board.push(row)
 
@@ -151,9 +148,13 @@ RenderEngine =
     return
     for y of board
       for x of board[y]
-        [user_id, power] = board[y][x]
         #RenderEngine.board[y][x] =
+        [user_id, power] = board[y][x]
 
+###
+# board - Two dimentional array. Each item should be formatted as
+#         [<user_id>,<power>]
+###
 board = [
   [[1, 50], [0, 10], [0, 10], [0, 10]],
   [[0, 10], [0, 10], [0, 10], [0, 10]],
@@ -164,7 +165,7 @@ board = [
 RenderEngine.init(board)
 
 step = 0
-setInterval('tick()', 5000)
+#setInterval('tick()', 5000)
 window.tick = ->
   step++
   if step == 1
