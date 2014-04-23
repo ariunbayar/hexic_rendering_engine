@@ -45,8 +45,7 @@ if step == 0
 window.ticker = ->
   timer = setInterval('ticker()', 3000)
   step++
-  board[0][0] = [1, 20 * step]
-  board[0][1] = [1, 10 * step] if step == 1
+  board[0][1] = [1, 30] if step == 1
   if step == 2
     board[0][2] = [1, 50]
     board[4][5] = [2, 70]
