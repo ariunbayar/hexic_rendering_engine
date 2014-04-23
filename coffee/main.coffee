@@ -24,6 +24,7 @@ window.ticker = ->
   step++
   increment_cells(board)
   board[0][1] = [1, 75] if step == 1
+  board[0][1] = [1, 30] if step == 1
   if step == 2
     board[0][2] = [1, 50]
     board[4][5] = [2, 70]
