@@ -5,6 +5,7 @@ G = ->  # graphics class
     @svg = d3.select('body').append('svg')
       .attr('width', 500)
       .attr('height', 400)
+
   @drawArc = (x, y, inner_radius, outer_radius, fill_percent, color) ->
     @arc_calc = d3.svg.arc()
       .startAngle(0)
@@ -20,7 +21,7 @@ G = ->  # graphics class
   @animateArc = () ->
     @arc.attr('d', @arc_calc.endAngle(2 * Math.PI * (@progress / 100)))
 
-  @drawCircle = (x, y, r, border, colors)->
+  @drawCircle = (x, y, r, border, colors) ->
     circle = @svg.append('circle')
       .attr('cx', x)
       .attr('cy', y)
@@ -29,11 +30,13 @@ G = ->  # graphics class
       .attr('stroke-width', border)
       .attr('fill', colors.fill)
     return circle
+
   @animateCircle = ->
     @circle.transition()
       .duration(700)
       .attr('cx', 200)
-  @drawHexagon = (x, y, r, border, colors)->
+
+  @drawHexagon = (x, y, r, border, colors) ->
     @svg.append("svg:polygon")
       .attr('fill', '#fff')
       .attr('fill', colors.fill)
