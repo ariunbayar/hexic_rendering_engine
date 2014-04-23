@@ -1,3 +1,28 @@
+H = {}
+H.increment = [
+  [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0,   0,   0,   0, 153, 154,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0,   0,   0, 152, 120, 121, 155,   0,   0,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0,   0, 151, 119,  91,  92, 122, 156,   0,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0, 150, 118,  90,  66,  67,  93, 123, 157,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0, 149, 117,  89,  65,  45,  46,  68,  94, 124, 158,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0, 148, 116,  88,  64,  44,  28,  29,  47,  69,  95, 125, 159,   0,   0,   0,   0],
+  [  0,   0,   0, 147, 115,  87,  63,  43,  27,  15,  16,  30,  48,  70,  96, 126, 160,   0,   0,   0],
+  [  0,   0, 146, 114,  86,  62,  42,  26,  14,   6,   7,  17,  31,  49,  71,  97, 127, 161,   0,   0],
+  [  0, 145, 113,  85,  61,  41,  25,  13,   5,   1,   2,   8,  18,  32,  50,  72,  98, 128, 162,   0],
+  [  0, 180, 144, 112,  84,  60,  40,  24,  12,   4,   3,   9,  19,  33,  51,  73,  99, 129, 163,   0],
+  [  0,   0, 179, 143, 111,  83,  59,  39,  23,  11,  10,  20,  34,  52,  74, 100, 130, 164,   0,   0],
+  [  0,   0,   0, 178, 142, 110,  82,  58,  38,  22,  21,  35,  53,  75, 101, 131, 165,   0,   0,   0],
+  [  0,   0,   0,   0, 177, 141, 109,  81,  57,  37,  36,  54,  76, 102, 132, 166,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0, 176, 140, 108,  80,  56,  55,  77, 103, 133, 167,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0, 175, 139, 107,  79,  78, 104, 134, 168,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0,   0, 174, 138, 106, 105, 135, 169,   0,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0,   0,   0, 173, 137, 136, 170,   0,   0,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0,   0,   0,   0, 172, 171,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+  [  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0],
+]
+H.levels = [180, 180 + 112, 180 + 112 + 60, 180 + 112 + 60 + 24, 180 + 112 + 60 + 24 + 4]
+
 RenderEngine =
   user_colors:
     0:
@@ -26,6 +51,16 @@ RenderEngine =
       '5': '#e6e6ff'
 
   PIXEL_SIZE: 5
+
+  ###
+  5 - 4 = 4
+  4 - 4 + 5*4 = 24
+  3 - 4 + 5*4 + 9*4 = 60
+  2 - 4 + 5*4 + 9*4 + 13*4 = 112
+  1 - 4 + 5*4 + 9*4 + 13*4 + 17*4 = 180
+  total: 380
+
+  ###
 
   HEXAGON: ["        ****        ",
             "      **0110**      ",
@@ -63,49 +98,64 @@ RenderEngine =
         container: @get('container')
         coord: @get('coord')
         color: @get('colors')
+        power: @get('power')
       @set('element', el_hexagon)
       @on("change:user_id", @userChanged, @)
+      @on("change:power", @powerChanged, @)
     userChanged: ->
       @get('element').set('color', @get('colors'))
+    powerChanged: ->
+      @get('element').set('power', @get('power'))
 
   Hexagon: Backbone.Model.extend
     defaults:
       container: null
       coord: null
       color: null
+      power: null
       pixels: null
     initialize: ->
       colors = @get('color')
+      [hex_x, hex_y] = @get('coord')
+      cell = @get('container').append('svg:g')
+      power = @get('power')
+
       width = 20 * RenderEngine.PIXEL_SIZE
       height = 16 * RenderEngine.PIXEL_SIZE
-      [hex_x, hex_y] = @get('coord')
       hex_x = parseInt(hex_x)
       hex_y = parseInt(hex_y)
       offset_x = if hex_y % 2 then .5 else 0
       pos_x = width * (hex_x + offset_x)
       pos_y = height * hex_y
-      cell = @get('container').append('svg:g')
       cell.attr('transform',  'translate(' +  pos_x + ', ' + pos_y + ')')
       pixels = []
       for y, row of RenderEngine.HEXAGON
         pixel_row = []
         for x, dot of row
           if dot of colors
+            color = colors[dot]
+            if dot > 0
+              color = colors[0]
+              if power <= H.levels[0 + 1]
+                if power >= H.increment[y][x]
+                  color = colors[1]
             pixel = new RenderEngine.Pixel
               container: cell
               x: x
               y: y
               size: RenderEngine.PIXEL_SIZE
-              color: colors[dot]
+              color: color
             pixel_row.push(pixel)
           else
             pixel_row.push(null)
         pixels.push(pixel_row)
       @set('pixels', pixels)
-      @on("change:color", @colorChanged, @)
-    colorChanged: ->
+      @on("change:color", @redraw, @)
+      @on("change:power", @redraw, @)
+    redraw: ->
       colors = @get('color')
       pixels = @get('pixels')
+      power = @get('power')
       for y, row of RenderEngine.HEXAGON
         for x, dot of row
           if dot of colors
@@ -190,6 +240,8 @@ window.tick = ->
     board[2][3] = [2, 30]
   if step == 2
     board[0][2] = [1, 10]
+  board[0][1][1]++
+  return
   if step > 2
     board[0][1] = [0, 10]
     board[2][3] = [0, 10]
