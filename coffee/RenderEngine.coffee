@@ -13,7 +13,7 @@ Graphics =
       .attr('transform', "translate(#{x}, #{y})")
     g.append('path')
       .attr('fill', color)
-      .attr('d', Hexagon.arc.getD(0, 2 * Math.PI * fill_percent, inner_radius, outer_radius))
+      .attr('d', Helpers.arc.getD(0, 2 * Math.PI * fill_percent, inner_radius, outer_radius))
 
   drawCircle: (container, x, y, r, border, colors) ->
     container.append('circle')
@@ -102,7 +102,7 @@ Helpers =
     coord_y = position.y * Settings.offset_y + Settings.board_offset_y
     return {x: coord_x, y: coord_y }
 
-  getRadiusForPower: (power) ->
+  getRadiusAndProgressFor: (power) ->
     level = 0
     radius_diff = Settings.radiuses[1] - Settings.radiuses[0]
     while (true)
@@ -112,10 +112,10 @@ Helpers =
         break
       power -= perimeter
       level++
-    radius = {arc: r, circle: null}
-    if r - radius_diff > 0
-      radius.circle = r - radius_diff
-    return radius
+    r_arc = r
+    r_circle = if r - radius_diff > 0 then r - radius_diff else null
+    progress = power / perimeter
+    return [r_circle, r_arc, progress]
 
 Settings =
   radius:   29
@@ -167,19 +167,27 @@ Cell = Backbone.Model.extend
     el_container = @get('el_container')
     colors = @get('colors')
     border = Settings.border
-    radius = Helpers.getRadiusForPower(power)
+    [r_circle, r_arc, progress] = Helpers.getRadiusAndProgressFor(power)
 
-    #el_arc = @get('el_arc')
+    # resize arc depending on radius and percent calculated from power
+    el_arc = @get('el_arc')
+    if el_arc == null
+      el_arc = Graphics.drawArc(
+        el_container, coords.x, coords.y, 0, r_arc, progress, colors.fill)
+      @set('el_arc', el_arc)
+    else
+      Graphics.changeArcRadius(el_arc, r_arc)
 
-    return if radius.circle == null
+    # resize circle depending on radius calculated from power
+    return if r_circle == null
     el_circle = @get('el_circle')
     if el_circle == null
       c = {stroke: colors.fill, fill: colors.stroke }
       el_circle = Graphics.drawCircle(
-        el_container, coords.x, coords.y, radius.circle, border, c)
+        el_container, coords.x, coords.y, r_circle, border, c)
       @set('el_circle', el_circle)
     else
-      Graphics.changeCircleRadius(el_circle, radius.circle)
+      Graphics.changeCircleRadius(el_circle, r_circle)
 
 Engine = ->
   @board = []
