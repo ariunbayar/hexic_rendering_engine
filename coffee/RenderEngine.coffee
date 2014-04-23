@@ -1,4 +1,49 @@
+if typeof(d3) == "undefined"
+  console.log "d3.js is not included. Consult with d3js.org"
+  return
+
+Graphics = ->
+  @createSVG = (container_selector, width, height) ->
+    d3.select(container_selector).append('svg')
+      .attr('width', width)
+      .attr('height', heigth)
+
+  @drawArc = (container, x, y, inner_radius, outer_radius, fill_percent, color) ->
+    g = container.append('g')
+      .attr('transform', "translate(#{x}, #{y})")
+    g.append('path')
+      .attr('fill', color)
+      .attr('d', Hexagon.arc.getD(0, 2 * Math.PI * fill_percent, inner_radius, outer_radius))
+
+  @drawCircle = (container, x, y, r, border, colors) ->
+    container.append('circle')
+      .attr('cx', x)
+      .attr('cy', y)
+      .attr('r', r)
+      .attr('stroke', colors.stroke)
+      .attr('stroke-width', border)
+      .attr('fill', colors.fill)
+
+  @drawHexagon = (container, x, y, r, border, colors) ->
+    container.append("svg:polygon")
+      .attr('fill', '#fff')
+      .attr('fill', colors.fill)
+      .attr('stroke', colors.stroke)
+      .attr('stroke-width', border)
+      .attr("points", Helpers.polygon.getPoints(x, y, 6, r))
+
+  return
+
+
 Helpers = 
+  arc:
+    getD: (start_angle, end_angle, inner_radius, outer_radius) ->
+      d3.svg.arc()
+        .startAngle(start_angle)
+        .innerRadius(inner_radius)
+        .outerRadius(outer_radius)
+        .endAngle(end_angle)
+
   polygon:
     getStarPoints: (centerX, centerY, arms, outerRadius, innerRadius) ->
       results = ""
@@ -54,5 +99,6 @@ Settings =
     blue: Helpers.colors(0, 0, 255)
     gray: Helpers.colors(127, 127, 127)
 
-window.Settings = Settings
+window.Graphics = Graphics
 window.Helpers = Helpers
+window.Settings = Settings
