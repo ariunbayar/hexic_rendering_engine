@@ -44,6 +44,16 @@ Graphics =
       .attr('transform', old_transform + ' rotate(180)')
       .each('end', -> d3.select(@).attr('transform', old_transform))
 
+  changeArcColor: (el, color) ->
+    el.select('path')
+      .attr('fill', color)
+
+  changeCircleColor: (el, colors) ->
+    el.select('circle')
+      .attr('stroke', colors.stroke)
+      .attr('stroke-width', border)
+      .attr('fill', colors.fill)
+
 Helpers = 
   arc:
     getD: (start_angle, end_angle, inner_radius, outer_radius) ->
@@ -157,8 +167,13 @@ Cell = Backbone.Model.extend
   colorsChanged: ->
     colors = @get('colors')
     el_hexagon = @get('el_hexagon')
+    el_circle = @get('el_circle')
+    el_arc = @get('el_arc')
     return if el_hexagon == null
     Graphics.changeHexagonColor(el_hexagon, colors)
+    if el_circle
+      Graphics.changeCircleColor(el_circle, colors)
+    #Graphics.changeArcColor(el_arc, colors.fill)
 
   powerChanged: ->
     power = @get('power')
