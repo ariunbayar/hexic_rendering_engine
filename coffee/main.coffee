@@ -42,32 +42,16 @@ G = ->  # graphics class
       .attr('fill', colors.fill)
       .attr('stroke', colors.stroke)
       .attr('stroke-width', border)
-      .attr("points", CalculateStarPoints(x, y, 6, r, Math.sin(Math.PI/3) * r))
+      .attr("points", Helpers.polygon.getPoints(x, y, 6, r))
 
   return
-
-H =  # helpers
-  rand: (n) ->
-    Math.round(Math.random() * n)
-  colors: (r, g, b) ->
-    stroke: "rgba(#{r}, #{g}, #{b}, 1)"
-    fill: "rgba(#{r}, #{g}, #{b}, .3)"
-
-C =  # constants
-  radius:   29
-  border:   0
-  offset_x: 2 * 30 * Math.sin(Math.PI / 3)
-  offset_y: 2 * 30 * Math.sin(Math.PI / 3) * Math.sin(Math.PI / 3)
-  colors:
-    red: H.colors(255, 0, 0)
-    blue: H.colors(0, 0, 255)
 
 Cell = ->
   @init = (x, y, colors, power) ->
     return if @el != undefined
     @coord = @getCoords(x, y)
-    #@el_bg = g.drawCircle(@coord.x, @coord.y, C.radius, C.border, colors)
-    @el_bg = g.drawHexagon(@coord.x, @coord.y, C.radius, C.border, colors)
+    #@el_bg = g.drawCircle(@coord.x, @coord.y, Settings.radius, Settings.border, colors)
+    @el_bg = g.drawHexagon(@coord.x, @coord.y, Settings.radius, Settings.border, colors)
     @colors = colors
     @drawPower(power)
 
@@ -87,42 +71,22 @@ Cell = ->
     return
 
   @getCoords = (x, y) ->
-    coord_x = x * C.offset_x
+    coord_x = x * Settings.offset_x
     if y % 2
-      coord_x += C.offset_x / 2
-    coord_y = y * C.offset_y
+      coord_x += Settings.offset_x / 2
+    coord_y = y * Settings.offset_y
     return {x: coord_x, y: coord_y }
 
   return
 
-
-CalculateStarPoints = (centerX, centerY, arms, outerRadius, innerRadius) ->
-  results = ""
-  angle = Math.PI / arms
-
-  for i in [0...(2 * arms)]
-    # Use outer or inner radius depending on what iteration we are in.
-    r = if (i & 1) == 0 then outerRadius else innerRadius
-
-    currX = centerX + Math.cos(i * angle + angle) * r
-    currY = centerY + Math.sin(i * angle + angle) * r
-
-    # Our first time we simply append the coordinates, subsequet times
-    # we append a ", " to distinguish each coordinate pair.
-    if i == 0
-         results = currX + "," + currY
-    else
-         results += ", " + currX + "," + currY
-
-   return results
 
 g = new G
 g.initSvg()
 
 for y in [1..6]
   for x in [1..6]
-    colors = [C.colors.red, C.colors.blue][H.rand(1)]
-    (new Cell).init(x, y, colors, H.rand(500))
+    colors = [Settings.colors.red, Settings.colors.blue][Helpers.rand(1)]
+    (new Cell).init(x, y, colors, Helpers.rand(500))
 
 ###
 engine.animateCircle()

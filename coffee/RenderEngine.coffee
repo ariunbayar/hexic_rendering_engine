@@ -1,6 +1,4 @@
-cache = {}
-
-window.Helpers =
+Helpers = 
   polygon:
     getStarPoints: (centerX, centerY, arms, outerRadius, innerRadius) ->
       results = ""
@@ -39,4 +37,22 @@ window.Helpers =
 
       return results
 
+  rand: (n) ->
+    Math.round(Math.random() * n)
+
+  colors: (r, g, b) ->
+    stroke: "rgba(#{r}, #{g}, #{b}, 1)"
+    fill: "rgba(#{r}, #{g}, #{b}, .3)"
+
+Settings =
+  radius:   29
+  border:   0
+  offset_x: 2 * 30 * Math.sin(Math.PI / 3)
+  offset_y: 2 * 30 * Math.sin(Math.PI / 3) * Math.sin(Math.PI / 3)
+  colors:
+    red: Helpers.colors(255, 0, 0)
+    blue: Helpers.colors(0, 0, 255)
+    gray: Helpers.colors(127, 127, 127)
+
+window.Settings = Settings
 window.Helpers = Helpers
