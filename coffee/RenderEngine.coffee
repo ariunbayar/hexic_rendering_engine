@@ -102,8 +102,24 @@ Helpers =
     coord_y = position.y * Settings.offset_y + Settings.board_offset_y
     return {x: coord_x, y: coord_y }
 
+  getRadiusForPower: (power) ->
+    level = 0
+    radius_diff = Settings.radiuses[1] - Settings.radiuses[0]
+    while (true)
+      r = Settings.radiuses[level]
+      perimeter = 2 * Math.PI * r
+      if power < perimeter
+        break
+      power -= perimeter
+      level++
+    radius = {arc: r, circle: null}
+    if r - radius_diff > 0
+      radius.circle = r - radius_diff
+    return radius
+
 Settings =
   radius:   29
+  radiuses: [3, 6, 9, 12, 15, 18, 21, 24, 27]
   border:   0
   offset_x: 2 * 30 * Math.sin(Math.PI / 3)
   offset_y: 2 * 30 * Math.sin(Math.PI / 3) * Math.sin(Math.PI / 3)
@@ -145,7 +161,25 @@ Cell = Backbone.Model.extend
     Graphics.changeHexagonColor(el_hexagon, colors)
 
   powerChanged: ->
-    # TODO
+    power = @get('power')
+    return if power == null
+    coords = Helpers.coords(@get('position'))
+    el_container = @get('el_container')
+    colors = @get('colors')
+    border = Settings.border
+    radius = Helpers.getRadiusForPower(power)
+
+    #el_arc = @get('el_arc')
+
+    return if radius.circle == null
+    el_circle = @get('el_circle')
+    if el_circle == null
+      c = {stroke: colors.fill, fill: colors.stroke }
+      el_circle = Graphics.drawCircle(
+        el_container, coords.x, coords.y, radius.circle, border, c)
+      @set('el_circle', el_circle)
+    else
+      Graphics.changeCircleRadius(el_circle, radius.circle)
 
 Engine = ->
   @board = []

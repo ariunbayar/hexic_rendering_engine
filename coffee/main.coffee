@@ -40,6 +40,7 @@ window.game = new Engine
 
 step = 0
 timer = setInterval('ticker()', 3000)
+game.updateBoard(board)
 window.ticker = ->
   step++
   board[0][1] = [1, 75] if step == 1
