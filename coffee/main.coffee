@@ -1,3 +1,4 @@
+###
 Cell = ->
   @init = (x, y, colors, power) ->
     return if @el != undefined
@@ -22,19 +23,18 @@ Cell = ->
     g.drawArc(@coord.x, @coord.y, 0, radius, power / perimeter, @colors.fill)
     return
 
-  @getCoords = (x, y) ->
-    coord_x = x * Settings.offset_x
-    if y % 2
-      coord_x += Settings.offset_x / 2
-    coord_y = y * Settings.offset_y
-    return {x: coord_x, y: coord_y }
-
   return
+###
 
 
-svg = Graphics.createSVG('body', 400, 500)
+board = [
+  [[1, 50], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
+  [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
+  [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
+  [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
+  [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
+  [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [2, 50], ],
+]
 
-for y in [1..6]
-  for x in [1..6]
-    colors = [Settings.colors.red, Settings.colors.blue][Helpers.rand(1)]
-    (new Cell).init(x, y, colors, Helpers.rand(500))
+window.game = new Engine
+game.updateBoard(board)
