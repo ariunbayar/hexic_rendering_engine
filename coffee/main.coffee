@@ -20,7 +20,6 @@ increment_cells = (board) ->
       board[y][x][1] += 3
 
 window.ticker = ->
-  timer = setInterval('ticker()', 3000)
   step++
   increment_cells(board)
   board[0][1] = [1, 75] if step == 1
