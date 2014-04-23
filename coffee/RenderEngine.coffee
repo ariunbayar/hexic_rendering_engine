@@ -45,14 +45,13 @@ Graphics =
       .each('end', -> d3.select(@).attr('transform', old_transform))
 
   changeArcColor: (el, color) ->
-    el.select('path')
-      .attr('fill', color)
+    el.attr('fill', color)
 
   changeCircleColor: (el, colors) ->
-    el.select('circle')
-      .attr('stroke', colors.stroke)
+    el.attr('stroke', colors.stroke)
       .attr('stroke-width', border)
       .attr('fill', colors.fill)
+
   changeCircleRadius: (el, radius) ->
     el.transition()
       .duration(750)
@@ -182,7 +181,7 @@ Cell = Backbone.Model.extend
     if el_circle
       Graphics.changeCircleColor(el_circle, colors)
     if el_arc
-    Graphics.changeArcColor(el_arc, colors.fill)
+      Graphics.changeArcColor(el_arc, colors.fill)
 
   powerChanged: ->
     power = @get('power')
