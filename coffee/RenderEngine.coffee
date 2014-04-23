@@ -25,13 +25,24 @@ Graphics =
       .attr('fill', colors.fill)
 
   drawHexagon: (container, x, y, r, border, colors) ->
-    container.append("svg:polygon")
-      .attr('fill', '#fff')
+    g = container.append('g')
+      .attr('transform', "translate(#{x} #{y})")
+    g.append("svg:polygon")
       .attr('fill', colors.fill)
       .attr('stroke', colors.stroke)
       .attr('stroke-width', border)
-      .attr("points", Helpers.polygon.getPoints(x, y, 6, r))
+      .attr("points", Helpers.polygon.getPoints(0, 0, 6, r))
+    return g
 
+  changeHexagonColor: (el, colors) ->
+    el.select('polygon')
+      .attr('fill', colors.fill)
+      .attr('stroke', colors.stroke)
+    old_transform = el.attr('transform')
+    el.transition()
+      .duration(750)
+      .attr('transform', old_transform + ' rotate(180)')
+      .each('end', -> d3.select(@).attr('transform', old_transform))
 
 Helpers = 
   arc:
@@ -85,11 +96,10 @@ Helpers =
     fill: "rgba(#{r}, #{g}, #{b}, .3)"
 
   coords: (position) ->
-    [x, y] = position
-    coord_x = x * Settings.offset_x
-    if y % 2
+    coord_x = position.x * Settings.offset_x + Settings.board_offset_x
+    if position.y % 2
       coord_x += Settings.offset_x / 2
-    coord_y = y * Settings.offset_y
+    coord_y = position.y * Settings.offset_y + Settings.board_offset_y
     return {x: coord_x, y: coord_y }
 
 Settings =
@@ -97,6 +107,8 @@ Settings =
   border:   0
   offset_x: 2 * 30 * Math.sin(Math.PI / 3)
   offset_y: 2 * 30 * Math.sin(Math.PI / 3) * Math.sin(Math.PI / 3)
+  board_offset_x: 30
+  board_offset_y: 30
   colors:
     red: Helpers.colors(255, 0, 0)
     blue: Helpers.colors(0, 0, 255)
@@ -123,12 +135,24 @@ Cell = Backbone.Model.extend
       container, coords.x, coords.y, radius, border, colors)
     @set('el_hexagon', el_hexagon)
 
+    @on('change:power', @powerChanged, @)
+    @on('change:colors', @colorsChanged, @)
+
+  colorsChanged: ->
+    colors = @get('colors')
+    el_hexagon = @get('el_hexagon')
+    return if el_hexagon == null
+    Graphics.changeHexagonColor(el_hexagon, colors)
+
+  powerChanged: ->
+    # TODO
+
 Engine = ->
   @board = []
   @svg = null
 
   @updateBoard = (board) ->
-    @svg = Graphics.createSVG('body', 400, 500) if @svg == null
+    @svg = Graphics.createSVG('body', 500, 400) if @svg == null
 
     # each cell has to be [<user_id>, <power>]
     for y of board
@@ -136,7 +160,6 @@ Engine = ->
       for x of board
         [user_id, power] = board[y][x]
         @board[y][x] = @_newCellAt(x, y) if not (x of @board[y])
-        @board[y][x].set('user_id', user_id)
         @board[y][x].set('colors', @_getColor(user_id))
         @board[y][x].set('power', power)
     return
