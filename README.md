@@ -5,4 +5,4 @@ Rendering engine for hexic
 
 To watch and compile coffeescript files into js::
 
-    coffee -cwo js coffee
+    coffee -cwo js/compiled/ coffee
