@@ -28,7 +28,7 @@ Cell = ->
 
 
 board = [
-  [[1, 50], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
+  [[1, 50], [0, 90], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
@@ -43,8 +43,10 @@ if step == 0
   timer = setTimeout('ticker()', 0)
 
 window.ticker = ->
-  timer = setTimeout('ticker()', 3000)
-  board[0][1] = [1, 75] if step == 1
+  timer = setInterval('ticker()', 3000)
+  step++
+  board[0][0] = [1, 20 * step]
+  board[0][1] = [1, 10 * step] if step == 1
   if step == 2
     board[0][2] = [1, 50]
     board[4][5] = [2, 70]
@@ -54,5 +56,4 @@ window.ticker = ->
     board[1][2] = [1, 25]
     board[4][3] = [2, 30]
     clearInterval(timer)
-  step++
   game.updateBoard(board)

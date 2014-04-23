@@ -53,6 +53,14 @@ Graphics =
       .attr('stroke', colors.stroke)
       .attr('stroke-width', border)
       .attr('fill', colors.fill)
+  changeCircleRadius: (el, radius) ->
+    el.transition()
+      .duration(750)
+      .attr('r', radius)
+      .ease('elastic')
+
+  changeArcRadius: (el, inner_radius, outer_radius, progress) ->
+    el.attr('d', Helpers.arc.getD(0, 2 * Math.PI * progress, inner_radius, outer_radius))
 
 Helpers = 
   arc:
@@ -173,7 +181,8 @@ Cell = Backbone.Model.extend
     Graphics.changeHexagonColor(el_hexagon, colors)
     if el_circle
       Graphics.changeCircleColor(el_circle, colors)
-    #Graphics.changeArcColor(el_arc, colors.fill)
+    if el_arc
+    Graphics.changeArcColor(el_arc, colors.fill)
 
   powerChanged: ->
     power = @get('power')
@@ -191,7 +200,7 @@ Cell = Backbone.Model.extend
         el_container, coords.x, coords.y, 0, r_arc, progress, colors.fill)
       @set('el_arc', el_arc)
     else
-      Graphics.changeArcRadius(el_arc, r_arc)
+      Graphics.changeArcRadius(el_arc, 0, r_arc, progress)
 
     # resize circle depending on radius calculated from power
     return if r_circle == null
