@@ -43,6 +43,7 @@ timer = setInterval('ticker()', 3000)
 game.updateBoard(board)
 window.ticker = ->
   step++
+  board[0][0] = [1, 20 * step]
   board[0][1] = [1, 75] if step == 1
   if step == 2
     board[0][2] = [1, 30]

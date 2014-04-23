@@ -44,6 +44,16 @@ Graphics =
       .attr('transform', old_transform + ' rotate(180)')
       .each('end', -> d3.select(@).attr('transform', old_transform))
 
+  changeCircleRadius: (el, radius) ->
+    el.transition()
+      .duration(750)
+      .attr('r', radius)
+      .ease('elastic')
+
+  changeArcRadius: (el, radius) ->
+    # TODO
+    return
+
 Helpers = 
   arc:
     getD: (start_angle, end_angle, inner_radius, outer_radius) ->
