@@ -49,7 +49,6 @@ Graphics =
 
   changeCircleColor: (el, colors) ->
     el.attr('stroke', colors.stroke)
-      .attr('stroke-width', border)
       .attr('fill', colors.fill)
 
   changeCircleRadius: (el, radius) ->
