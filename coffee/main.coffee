@@ -35,13 +35,14 @@ window.ticker = ->
   game.updateBoard(board)
 
 d3.selectAll('.hexagon').on('mouseover', ->
+  el = d3.select(this)
+  old_color = el.style('fill')
   d3.select(this).transition()
-    #.style('stroke-width', 3)
-    #.style('stroke-linejoin', 'round')
-    .style('color', 'red')
-    #.styleTween("color", -> d3.interpolate("green", "red"))
+    .style('stroke-width', 3)
+    .style('fill-opacity', .5)
 )
 d3.selectAll('.hexagon').on('mouseout', ->
   d3.select(this).transition()
     .style('stroke-width', 0)
+    .style('fill-opacity', 1)
 )

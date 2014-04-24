@@ -32,6 +32,7 @@ Graphics =
       .attr('fill', colors.fill)
       .attr('stroke', colors.stroke)
       .attr('stroke-width', border)
+      .style('stroke-linejoin', 'round')
       .attr("points", Helpers.polygon.getPoints(0, 0, 6, r))
     return g
 
@@ -182,7 +183,8 @@ Cell = Backbone.Model.extend
     return if el_hexagon == null
     Graphics.changeHexagonColor(el_hexagon, colors)
     if el_circle
-      Graphics.changeCircleColor(el_circle, colors)
+      c = {stroke: colors.fill, fill: colors.stroke }
+      Graphics.changeCircleColor(el_circle, c)
     if el_arc
       Graphics.changeArcColor(el_arc, colors.fill)
 
