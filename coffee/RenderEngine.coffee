@@ -45,6 +45,7 @@ Graphics =
       .attr('stroke-width', 1)
       .attr("points", "0,0 10,10 0,5 -10,10 0,0")
       .attr('transform', "translate(#{0} #{-32})")
+      .attr('display', "none")
     return g
 
   changeHexagonColor: (el, colors) ->
@@ -73,11 +74,14 @@ Graphics =
   changeArcRadius: (el, inner_radius, outer_radius, progress) ->
     el.attr('d', Helpers.arc.getD(0, 2 * Math.PI * progress, inner_radius, outer_radius))
 
-  changeArrowDirection: (el, direction) ->
-    console.log el
-    el.attr('transform',  'rotate(45)')
+  changeArrowDirection: (el, coords, direction, colors) ->
+    el.attr('transform', "translate(#{coords.x}, #{coords.y})" + Helpers.getArrowDegrees(direction))
+    el.select('polyline')
+      .attr('display', "block")
+      .attr('fill', colors.fill)
+      .attr('stroke', colors.stroke)
 
-Helpers = 
+Helpers =
   arc:
     getD: (start_angle, end_angle, inner_radius, outer_radius) ->
       d3.svg.arc()
@@ -152,6 +156,20 @@ Helpers =
     r_circle = if r - radius_diff > 0 then r - radius_diff else null
     progress = power / perimeter
     return [r_circle, r_arc, progress]
+  getArrowDegrees: (direction) ->
+    if direction == 1
+      degrees = " rotate(330)"
+    if direction == 2
+      degrees = " rotate(35)"
+    if direction == 3
+      degrees = " rotate(90)"
+    if direction == 4
+      degrees = " rotate(150)"
+    if direction == 5
+      degrees = " rotate(210)"
+    if direction == 6
+      degrees = " rotate(270)"
+    return degrees
 
 Settings =
   radius:   29
@@ -177,6 +195,7 @@ Cell = Backbone.Model.extend
     position: null
     colors: Settings.colors.inactive
     power: null
+    direction: null
 
   initialize: ->
     coords = Helpers.coords(@get('position'))
@@ -188,11 +207,13 @@ Cell = Backbone.Model.extend
       container, coords.x, coords.y, colors)
     el_hexagon = Graphics.drawHexagon(
       container, coords.x, coords.y, radius, border, colors)
+    direction = @get('direction')
     @set('el_arrow', el_arrow)
     @set('el_hexagon', el_hexagon)
 
     @on('change:power', @powerChanged, @)
     @on('change:colors', @colorsChanged, @)
+    @on('change:direction', @directionChanged, @)
 
   colorsChanged: ->
     colors = @get('colors')
@@ -206,7 +227,6 @@ Cell = Backbone.Model.extend
       Graphics.changeCircleColor(el_circle, c)
     if el_arc
       Graphics.changeArcColor(el_arc, colors.fill)
-
   powerChanged: ->
     power = @get('power')
     return if power == null
@@ -236,6 +256,14 @@ Cell = Backbone.Model.extend
     else
       Graphics.changeCircleRadius(el_circle, r_circle)
 
+  directionChanged: ->
+    colors = @get('colors')
+    direction = @get('direction')
+    el_arrow = @get('el_arrow')
+    coords = Helpers.coords(@get('position'))
+    if direction
+      Graphics.changeArrowDirection(el_arrow, coords, direction, colors)
+
 Engine = ->
   @board = []
   @svg = null
@@ -247,10 +275,11 @@ Engine = ->
     for y of board
       @board[y] = [] if not (y of @board)
       for x of board
-        [user_id, power] = board[y][x]
+        [user_id, power, direction] = board[y][x]
         @board[y][x] = @_newCellAt(x, y) if not (x of @board[y])
         @board[y][x].set('colors', @_getColor(user_id))
         @board[y][x].set('power', power)
+        @board[y][x].set('direction', direction)
     return
 
   @_newCellAt = (x, y) ->

@@ -1,10 +1,10 @@
 board = [
-  [[1, 150], [0, 90], [0, 10], [0, 10], [0, 10], [0, 10], ],
+  [[1, 150, 3], [0, 90], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
-  [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [2, 50], ],
+  [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [2, 50, 1], ],
 ]
 
 window.game = new Engine
@@ -22,16 +22,16 @@ increment_cells = (board) ->
 window.ticker = ->
   step++
   increment_cells(board)
-  board[0][1] = [1, 75] if step == 1
-  board[0][1] = [1, 30] if step == 1
+  board[0][1] = [1, 75, 3] if step == 1
+  board[0][1] = [1, 30, 3] if step == 1
   if step == 2
-    board[0][2] = [1, 50]
-    board[4][5] = [2, 70]
-  board[0][3] = [1, 20] if step == 3
-  board[4][4] = [2, 25] if step == 4
+    board[0][2] = [1, 50, 3]
+    board[4][5] = [2, 70, 6]
+  board[0][3] = [1, 20, 5] if step == 3
+  board[4][4] = [2, 25, 6] if step == 4
   if step == 5
-    board[1][2] = [1, 25]
-    board[4][3] = [2, 30]
+    board[1][2] = [1, 25, 4]
+    board[4][3] = [2, 30, 2]
   game.updateBoard(board)
 
 d3.selectAll('.hexagon').on('mouseover', ->
@@ -40,10 +40,6 @@ d3.selectAll('.hexagon').on('mouseover', ->
   d3.select(this).transition()
     .style('stroke-width', 3)
     .style('fill-opacity', .5)
-  #el_arrow = Graphics.drawArrow(this)
-  #el_arrow = d3.select('.arrow').node()
-  #Graphics.changeArrowDirection(el_arrow, 1)
-  #console.log el_arrow
 )
 d3.selectAll('.hexagon').on('mouseout', ->
   d3.select(this).transition()
