@@ -1,5 +1,5 @@
 board = [
-  [[1, 50], [0, 90], [0, 10], [0, 10], [0, 10], [0, 10], ],
+  [[1, 150], [0, 90], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [0, 10], ],
@@ -40,6 +40,10 @@ d3.selectAll('.hexagon').on('mouseover', ->
   d3.select(this).transition()
     .style('stroke-width', 3)
     .style('fill-opacity', .5)
+  #el_arrow = Graphics.drawArrow(this)
+  #el_arrow = d3.select('.arrow').node()
+  #Graphics.changeArrowDirection(el_arrow, 1)
+  #console.log el_arrow
 )
 d3.selectAll('.hexagon').on('mouseout', ->
   d3.select(this).transition()

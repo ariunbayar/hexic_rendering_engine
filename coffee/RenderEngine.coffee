@@ -35,6 +35,17 @@ Graphics =
       .style('stroke-linejoin', 'round')
       .attr("points", Helpers.polygon.getPoints(0, 0, 6, r))
     return g
+  drawArrow: (container, x, y, colors) ->
+    g = container.append('g')
+      .attr('transform', "translate(#{x} #{y})")
+    g.append("svg:polyline")
+      .classed('arrow', true)
+      .attr('fill', "white")
+      .attr('stroke', "black")
+      .attr('stroke-width', 1)
+      .attr("points", "0,0 10,10 0,5 -10,10 0,0")
+      .attr('transform', "translate(#{0} #{-32})")
+    return g
 
   changeHexagonColor: (el, colors) ->
     el.select('polygon')
@@ -61,6 +72,10 @@ Graphics =
 
   changeArcRadius: (el, inner_radius, outer_radius, progress) ->
     el.attr('d', Helpers.arc.getD(0, 2 * Math.PI * progress, inner_radius, outer_radius))
+
+  changeArrowDirection: (el, direction) ->
+    console.log el
+    el.attr('transform',  'rotate(45)')
 
 Helpers = 
   arc:
@@ -158,6 +173,7 @@ Cell = Backbone.Model.extend
     el_hexagon: null
     el_circle: null
     el_arc: null
+    el_arrow: null
     position: null
     colors: Settings.colors.inactive
     power: null
@@ -168,8 +184,11 @@ Cell = Backbone.Model.extend
     border = Settings.border
     colors = @get('colors')
     container = @get('el_container')
+    el_arrow = Graphics.drawArrow(
+      container, coords.x, coords.y, colors)
     el_hexagon = Graphics.drawHexagon(
       container, coords.x, coords.y, radius, border, colors)
+    @set('el_arrow', el_arrow)
     @set('el_hexagon', el_hexagon)
 
     @on('change:power', @powerChanged, @)
