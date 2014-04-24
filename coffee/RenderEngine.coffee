@@ -28,6 +28,7 @@ Graphics =
     g = container.append('g')
       .attr('transform', "translate(#{x} #{y})")
     g.append("svg:polygon")
+      .classed('hexagon', true)
       .attr('fill', colors.fill)
       .attr('stroke', colors.stroke)
       .attr('stroke-width', border)
@@ -123,6 +124,9 @@ Helpers =
     level = 0
     radius_diff = Settings.radiuses[1] - Settings.radiuses[0]
     while (true)
+      if not (level of Settings.radiuses)
+        power = 0
+        break
       r = Settings.radiuses[level]
       perimeter = 2 * Math.PI * r
       if power < perimeter

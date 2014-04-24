@@ -33,3 +33,15 @@ window.ticker = ->
     board[1][2] = [1, 25]
     board[4][3] = [2, 30]
   game.updateBoard(board)
+
+d3.selectAll('.hexagon').on('mouseover', ->
+  d3.select(this).transition()
+    #.style('stroke-width', 3)
+    #.style('stroke-linejoin', 'round')
+    .style('color', 'red')
+    #.styleTween("color", -> d3.interpolate("green", "red"))
+)
+d3.selectAll('.hexagon').on('mouseout', ->
+  d3.select(this).transition()
+    .style('stroke-width', 0)
+)
