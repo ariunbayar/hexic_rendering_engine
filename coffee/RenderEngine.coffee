@@ -35,12 +35,9 @@ Graphics =
   drawArrow: (container, colors) ->
     g = container.append('g')
     g.append("svg:polyline")
-      .classed('arrow', true)
-      .attr('fill', "white")
-      .attr('stroke', "black")
       .attr('stroke-width', 1)
       .attr("points", "0,0 10,10 0,5 -10,10 0,0")
-      .attr('transform', "translate(#{0} #{-32})")
+      .attr('transform', "translate(0, -32)")
       .attr('display', "none")
     return g
 
