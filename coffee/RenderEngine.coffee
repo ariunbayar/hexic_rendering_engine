@@ -1,6 +1,9 @@
 if typeof(d3) == "undefined"
   console.log "d3.js is not included. Consult with d3js.org"
   return
+if typeof(Backbone) == "undefined"
+  console.log "backbone.js is not included. Consult with backbonejs.org"
+  return
 
 Graphics =
   createSVG: (container_selector, width, height) ->
@@ -158,7 +161,7 @@ Helpers =
 
   coords: (position) ->
     coord_x = position.x * Settings.offset_x + Settings.board_offset_x
-    if position.y % 2
+    if position.y % 2 == 0
       coord_x += Settings.offset_x / 2
     coord_y = position.y * Settings.offset_y + Settings.board_offset_y
     return {x: coord_x, y: coord_y }
@@ -312,13 +315,14 @@ Cell = Backbone.Model.extend
     for el in neighbours
       el.hoveredby = @.cid
 
-Engine = ->
-  @board = []
-  @svg = null
+class Engine
+  board: []
+  svg: null
 
-  @updateBoard = (board) ->
-    @svg = Graphics.createSVG('body', 500, 400) if @svg == null
+  constructor: (container_id, width, height) ->
+    @svg = Graphics.createSVG(container_id, width, height)
 
+  updateBoard: (board) ->
     # each cell has to be [<user_id>, <power>, <arrow_direction>]
     for y of board
       @board[y] = [] if not (y of @board)
@@ -338,7 +342,7 @@ Engine = ->
       for x of board[y]
         y = parseInt(y)
         x = parseInt(x)
-        shift = if y % 2 then 1 else 0
+        shift = if y % 2 then 0 else 1
         neighbours = []
         neighbours.push(@board[y-1][x-1+shift]) if has_cell_at(y-1, x-1+shift)
         neighbours.push(@board[y-1][x+shift]) if has_cell_at(y-1, x+shift)
@@ -349,12 +353,12 @@ Engine = ->
         @board[y][x].set('neighbours', neighbours)
     return
 
-  @_newCellAt = (x, y) ->
+  _newCellAt: (x, y) ->
     new Cell
       el_svg: @svg
       position: {x: x, y: y}
 
-  @_getColor = (user_id) ->
+  _getColor: (user_id) ->
     if not ('_colors_assigned' of @)
       @_colors_assigned = {}
       @_colors_left = [Settings.colors.blue, Settings.colors.red]
@@ -367,10 +371,4 @@ Engine = ->
     num_users = ((i for i of @_colors_assigned).length + 1)
     throw "not enough colors for #{num_users} users"
 
-  return
-
-
-window.Graphics = Graphics
-window.Helpers = Helpers
-window.Settings = Settings
 window.Engine = Engine

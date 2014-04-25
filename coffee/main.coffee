@@ -7,7 +7,7 @@ board = [
   [[0, 10], [0, 10], [0, 10], [0, 10], [0, 10], [2, 50, 1], ],
 ]
 
-window.game = new Engine
+window.game = new Engine('#svg')
 
 step = 0
 
