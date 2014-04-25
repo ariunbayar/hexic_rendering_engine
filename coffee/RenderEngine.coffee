@@ -8,43 +8,41 @@ Graphics =
       .attr('width', width)
       .attr('height', height)
 
-  drawArc: (container, x, y, inner_radius, outer_radius, fill_percent, color) ->
-    g = container.append('g')
+  drawContainer: (svg, x, y) ->
+    svg.append('g')
       .attr('transform', "translate(#{x}, #{y})")
-    g.append('path')
+
+  drawArc: (container, inner_radius, outer_radius, fill_percent, color) ->
+    container.append('path')
       .attr('fill', color)
       .attr('d', Helpers.arc.getD(0, 2 * Math.PI * fill_percent, inner_radius, outer_radius))
 
-  drawCircle: (container, x, y, r, border, colors) ->
+  drawCircle: (container, r, border, colors) ->
     container.append('circle')
-      .attr('cx', x)
-      .attr('cy', y)
       .attr('r', r)
       .attr('stroke', colors.stroke)
       .attr('stroke-width', border)
       .attr('fill', colors.fill)
 
-  drawHexagon: (container, x, y, r, border, colors) ->
-    g = container.append('g')
-      .attr('transform', "translate(#{x} #{y})")
-    g.append("svg:polygon")
-      .classed('hexagon', true)
+  drawHexagon: (container, r, border, colors) ->
+    container.append("svg:polygon")
       .attr('fill', colors.fill)
       .attr('stroke', colors.stroke)
       .attr('stroke-width', border)
       .style('stroke-linejoin', 'round')
       .attr("points", Helpers.polygon.getPoints(0, 0, 6, r))
-    return g
 
   changeHexagonColor: (el, colors) ->
-    el.select('polygon')
-      .attr('fill', colors.fill)
-      .attr('stroke', colors.stroke)
-    old_transform = el.attr('transform')
-    el.transition()
-      .duration(750)
-      .attr('transform', old_transform + ' rotate(180)')
-      .each('end', -> d3.select(@).attr('transform', old_transform))
+    el_parent = d3.select(el[0][0].parentNode)
+    old_transform = el_parent.attr('transform')
+    el_parent.transition()
+      .attr('transform', old_transform + ' rotate(60)')
+      .each('end', ->
+        el.attr('fill', colors.fill)
+          .attr('stroke', colors.stroke)
+      )
+      .transition()
+      .attr('transform', old_transform)
 
   changeArcColor: (el, color) ->
     el.attr('fill', color)
@@ -154,6 +152,7 @@ Settings =
 
 Cell = Backbone.Model.extend
   defaults:
+    el_svg: null
     el_container: null
     el_hexagon: null
     el_circle: null
@@ -161,15 +160,17 @@ Cell = Backbone.Model.extend
     position: null
     colors: Settings.colors.inactive
     power: null
+    move_to: null
 
   initialize: ->
     coords = Helpers.coords(@get('position'))
     radius = Settings.radius
     border = Settings.border
     colors = @get('colors')
-    container = @get('el_container')
-    el_hexagon = Graphics.drawHexagon(
-      container, coords.x, coords.y, radius, border, colors)
+    el_svg = @get('el_svg')
+    el_container = Graphics.drawContainer(el_svg, coords.x, coords.y)
+    el_hexagon = Graphics.drawHexagon(el_container, radius, border, colors)
+    @set('el_container', el_container)
     @set('el_hexagon', el_hexagon)
 
     @on('change:power', @powerChanged, @)
@@ -180,8 +181,8 @@ Cell = Backbone.Model.extend
     el_hexagon = @get('el_hexagon')
     el_circle = @get('el_circle')
     el_arc = @get('el_arc')
-    return if el_hexagon == null
-    Graphics.changeHexagonColor(el_hexagon, colors)
+    if el_hexagon
+      Graphics.changeHexagonColor(el_hexagon, colors)
     if el_circle
       c = {stroke: colors.fill, fill: colors.stroke }
       Graphics.changeCircleColor(el_circle, c)
@@ -200,8 +201,7 @@ Cell = Backbone.Model.extend
     # resize arc depending on radius and percent calculated from power
     el_arc = @get('el_arc')
     if el_arc == null
-      el_arc = Graphics.drawArc(
-        el_container, coords.x, coords.y, 0, r_arc, progress, colors.fill)
+      el_arc = Graphics.drawArc(el_container, 0, r_arc, progress, colors.fill)
       @set('el_arc', el_arc)
     else
       Graphics.changeArcRadius(el_arc, 0, r_arc, progress)
@@ -211,8 +211,7 @@ Cell = Backbone.Model.extend
     el_circle = @get('el_circle')
     if el_circle == null
       c = {stroke: colors.fill, fill: colors.stroke }
-      el_circle = Graphics.drawCircle(
-        el_container, coords.x, coords.y, r_circle, border, c)
+      el_circle = Graphics.drawCircle(el_container, r_circle, border, c)
       @set('el_circle', el_circle)
     else
       Graphics.changeCircleRadius(el_circle, r_circle)
@@ -224,19 +223,22 @@ Engine = ->
   @updateBoard = (board) ->
     @svg = Graphics.createSVG('body', 500, 400) if @svg == null
 
-    # each cell has to be [<user_id>, <power>]
+    # each cell has to be [<user_id>, <power>, <arrow_direction>]
     for y of board
       @board[y] = [] if not (y of @board)
       for x of board
-        [user_id, power] = board[y][x]
+        [user_id, power, dir] = board[y][x]
         @board[y][x] = @_newCellAt(x, y) if not (x of @board[y])
+        #neighbours = ...
+        #@board[y][x].set('neighbours', neighbours)
+        @board[y][x].set('move_to', dir)
         @board[y][x].set('colors', @_getColor(user_id))
         @board[y][x].set('power', power)
     return
 
   @_newCellAt = (x, y) ->
     new Cell
-      el_container: @svg
+      el_svg: @svg
       position: {x: x, y: y}
 
   @_getColor = (user_id) ->
