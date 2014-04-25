@@ -43,15 +43,16 @@ Graphics =
 
   changeHexagonColor: (el, colors) ->
     el_parent = d3.select(el[0][0].parentNode)
-    old_transform = el_parent.attr('transform')
     el_parent.transition()
-      .attr('transform', old_transform + ' rotate(60)')
+      .attr('fill-opacity', 0)
+      .attr('stroke-opacity', 0)
       .each('end', ->
         el.attr('fill', colors.fill)
           .attr('stroke', colors.stroke)
       )
       .transition()
-      .attr('transform', old_transform)
+      .attr('fill-opacity', 1)
+      .attr('stroke-opacity', 1)
 
   changeArcColor: (el, color) ->
     el.attr('fill', color)
@@ -70,7 +71,7 @@ Graphics =
     el.attr('d', Helpers.arc.getD(0, 2 * Math.PI * progress, inner_radius, outer_radius))
 
   changeArrowDirection: (el, direction, colors) ->
-    el.attr('transform', Helpers.getArrowDegrees(direction))
+    el.attr('transform', Helpers.arrow.getAngleBy(direction))
     el.select('polyline')
       .attr('display', "block")
       .attr('fill', colors.fill)
@@ -124,6 +125,22 @@ Helpers =
 
       return results
 
+  arrow:
+    getAngleBy: (direction) ->
+      if direction == 1
+        degrees = " rotate(330)"
+      if direction == 2
+        degrees = " rotate(35)"
+      if direction == 3
+        degrees = " rotate(90)"
+      if direction == 4
+        degrees = " rotate(150)"
+      if direction == 5
+        degrees = " rotate(210)"
+      if direction == 6
+        degrees = " rotate(270)"
+      return degrees
+
   colors: (r, g, b) ->
     stroke: "rgba(#{r}, #{g}, #{b}, 1)"
     fill: "rgba(#{r}, #{g}, #{b}, .3)"
@@ -152,20 +169,6 @@ Helpers =
     r_circle = if r - radius_diff > 0 then r - radius_diff else null
     progress = power / perimeter
     return [r_circle, r_arc, progress]
-  getArrowDegrees: (direction) ->
-    if direction == 1
-      degrees = " rotate(330)"
-    if direction == 2
-      degrees = " rotate(35)"
-    if direction == 3
-      degrees = " rotate(90)"
-    if direction == 4
-      degrees = " rotate(150)"
-    if direction == 5
-      degrees = " rotate(210)"
-    if direction == 6
-      degrees = " rotate(270)"
-    return degrees
 
 Settings =
   radius:   29
