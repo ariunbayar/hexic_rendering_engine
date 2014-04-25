@@ -348,8 +348,4 @@ Engine = ->
 
   return
 
-
-window.Graphics = Graphics
-window.Helpers = Helpers
-window.Settings = Settings
 window.Engine = Engine
