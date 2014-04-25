@@ -38,7 +38,7 @@ Graphics =
       .attr('stroke-width', 1)
       .attr("points", "0,0 10,10 0,5 -10,10 0,0")
       .attr('transform', "translate(0, -32)")
-      .attr('display', "none")
+      .style('visibility', 'hidden')
     return g
 
   changeHexagonColor: (el, colors) ->
@@ -69,12 +69,13 @@ Graphics =
   changeArcRadius: (el, inner_radius, outer_radius, progress) ->
     el.attr('d', Helpers.arc.getD(0, 2 * Math.PI * progress, inner_radius, outer_radius))
 
-  changeArrowDirection: (el, coords, direction, colors) ->
-    el.attr('transform', "translate(#{coords.x}, #{coords.y})" + Helpers.getArrowDegrees(direction))
+  changeArrowDirection: (el, direction, colors) ->
+    el.attr('transform', Helpers.getArrowDegrees(direction))
     el.select('polyline')
       .attr('display', "block")
       .attr('fill', colors.fill)
       .attr('stroke', colors.stroke)
+      .style('visibility', 'visible')
 
 Helpers =
   arc:
@@ -253,9 +254,8 @@ Cell = Backbone.Model.extend
     colors = @get('colors')
     direction = @get('direction')
     el_arrow = @get('el_arrow')
-    coords = Helpers.coords(@get('position'))
     if direction
-      Graphics.changeArrowDirection(el_arrow, coords, direction, colors)
+      Graphics.changeArrowDirection(el_arrow, direction, colors)
 
 Engine = ->
   @board = []
