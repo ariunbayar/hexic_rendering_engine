@@ -32,4 +32,8 @@ window.ticker = ->
   if step == 5
     board[1][2] = [1, 25, 4]
     board[4][3] = [2, 30, 2]
+  board[1][2] = [1, 25, 6] if step == 6
+  board[1][2] = [1, 25, 1] if step == 7
+  board[1][2] = [1, 25, 5] if step == 8
+  board[1][2] = [1, 25, 3] if step == 9
   game.updateBoard(board)

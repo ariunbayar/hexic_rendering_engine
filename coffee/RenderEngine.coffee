@@ -73,10 +73,14 @@ Graphics =
   changeArrowDirection: (el, direction, colors) ->
     el.attr('transform', Helpers.arrow.getAngleBy(direction))
     el.select('polyline')
-      .attr('display', "block")
       .attr('fill', colors.fill)
       .attr('stroke', colors.stroke)
+      .style('stroke-linecap', 'round')
+      .style('stroke-linejoin', 'round')
       .style('visibility', 'visible')
+
+  dragStarted: ->
+    console.log "Drag started"
 
   mouseoverHexagon: (el) ->
     el.transition()
@@ -87,6 +91,12 @@ Graphics =
     el.transition()
       .style('stroke-width', 0)
       .style('fill-opacity', 1)
+
+  mousedownHexagon: (el) ->
+    drag: d3.behavior.drag ->
+      @on('dragstart', dragStarted)
+      #.on('drag', dragged)
+      #.on('dragend', dragended)
 
 Helpers =
   arc:
@@ -229,6 +239,7 @@ Cell = Backbone.Model.extend
     @on('change:direction', @directionChanged, @)
     el_container.on('mouseover', -> Graphics.mouseoverHexagon(el_hexagon))
     el_container.on('mouseout',  -> Graphics.mouseoutHexagon(el_hexagon))
+    el_container.on('mousedown', -> Graphics.mousedownHexagon(el_hexagon))
 
   colorsChanged: ->
     colors = @get('colors')
@@ -276,6 +287,7 @@ Cell = Backbone.Model.extend
     el_arrow = @get('el_arrow')
     if direction
       Graphics.changeArrowDirection(el_arrow, direction, colors)
+
 
 Engine = ->
   @board = []
