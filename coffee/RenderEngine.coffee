@@ -79,9 +79,6 @@ Graphics =
       .style('stroke-linejoin', 'round')
       .style('visibility', 'visible')
 
-  dragStarted: ->
-    console.log "Drag started"
-
   mouseoverHexagon: (el) ->
     el.transition()
       .style('stroke-width', 3)
@@ -91,12 +88,6 @@ Graphics =
     el.transition()
       .style('stroke-width', 0)
       .style('fill-opacity', 1)
-
-  mousedownHexagon: (el) ->
-    drag: d3.behavior.drag ->
-      @on('dragstart', dragStarted)
-      #.on('drag', dragged)
-      #.on('dragend', dragended)
 
 Helpers =
   arc:
@@ -217,6 +208,7 @@ Cell = Backbone.Model.extend
     power: null
     direction: null
     neighbours: []
+    mousedown: false
 
   initialize: ->
     coords = Helpers.coords(@get('position'))
@@ -238,21 +230,34 @@ Cell = Backbone.Model.extend
     @on('change:power', @powerChanged, @)
     @on('change:colors', @colorsChanged, @)
     @on('change:direction', @directionChanged, @)
-    #el_container.on('mousedown', -> Graphics.mousedownHexagon(el_hexagon))
+    @on('change:mousedown', @mousedownChanged, @)
     # TODO uncomment following 2 lines
     #el_container.on('mouseover', -> Graphics.mouseoverHexagon(el_hexagon))
     #el_container.on('mouseout',  -> Graphics.mouseoutHexagon(el_hexagon))
     # TODO Debug only. remove followings when you uncomment above
     self = @
     el_container.on('mouseover', ->
+      el_arrow = self.get('el_arrow')
       Graphics.mouseoverHexagon(el_hexagon)
       for cell in self.get('neighbours')
         Graphics.mouseoverHexagon(cell.get('el_hexagon'))
+      for el in self.get('neighbours')
+        if el.cid == self.hoveredby then direction = el.cid
+      if direction
+        Graphics.changeArrowDirection(el_arrow, direction, colors)
     )
     el_container.on('mouseout',  ->
       Graphics.mouseoutHexagon(el_hexagon)
       for cell in self.get('neighbours')
         Graphics.mouseoutHexagon(cell.get('el_hexagon'))
+    )
+
+    el_container.on('mousedown', ->
+      self.set('mousedown', true)
+      self.set('from', self)
+    )
+
+    el_container.on('mouseup', ->
     )
 
   colorsChanged: ->
@@ -302,6 +307,10 @@ Cell = Backbone.Model.extend
     if direction
       Graphics.changeArrowDirection(el_arrow, direction, colors)
 
+  mousedownChanged: ->
+    neighbours = @get('neighbours')
+    for el in neighbours
+      el.hoveredby = @.cid
 
 Engine = ->
   @board = []
