@@ -206,6 +206,7 @@ Cell = Backbone.Model.extend
     colors: Settings.colors.inactive
     power: null
     direction: null
+    neighbours: []
 
   initialize: ->
     coords = Helpers.coords(@get('position'))
@@ -227,8 +228,21 @@ Cell = Backbone.Model.extend
     @on('change:power', @powerChanged, @)
     @on('change:colors', @colorsChanged, @)
     @on('change:direction', @directionChanged, @)
-    el_container.on('mouseover', -> Graphics.mouseoverHexagon(el_hexagon))
-    el_container.on('mouseout',  -> Graphics.mouseoutHexagon(el_hexagon))
+    # TODO uncomment following 2 lines
+    #el_container.on('mouseover', -> Graphics.mouseoverHexagon(el_hexagon))
+    #el_container.on('mouseout',  -> Graphics.mouseoutHexagon(el_hexagon))
+    # TODO Debug only. remove followings when you uncomment above
+    self = @
+    el_container.on('mouseover', ->
+      Graphics.mouseoverHexagon(el_hexagon)
+      for cell in self.get('neighbours')
+        Graphics.mouseoverHexagon(cell.get('el_hexagon'))
+    )
+    el_container.on('mouseout',  ->
+      Graphics.mouseoutHexagon(el_hexagon)
+      for cell in self.get('neighbours')
+        Graphics.mouseoutHexagon(cell.get('el_hexagon'))
+    )
 
   colorsChanged: ->
     colors = @get('colors')
@@ -287,14 +301,31 @@ Engine = ->
     # each cell has to be [<user_id>, <power>, <arrow_direction>]
     for y of board
       @board[y] = [] if not (y of @board)
-      for x of board
+      for x of board[y]
         [user_id, power, direction] = board[y][x]
         @board[y][x] = @_newCellAt(x, y) if not (x of @board[y])
-        #neighbours = ...
-        #@board[y][x].set('neighbours', neighbours)
         @board[y][x].set('colors', @_getColor(user_id))
         @board[y][x].set('power', power)
         @board[y][x].set('direction', direction)
+
+    # set its neighbours
+    has_cell_at = (y, x) ->
+      if y of board
+        return x of board[y]
+      return false
+    for y of board
+      for x of board[y]
+        y = parseInt(y)
+        x = parseInt(x)
+        shift = if y % 2 then 1 else 0
+        neighbours = []
+        neighbours.push(@board[y-1][x-1+shift]) if has_cell_at(y-1, x-1+shift)
+        neighbours.push(@board[y-1][x+shift]) if has_cell_at(y-1, x+shift)
+        neighbours.push(@board[y][x+1]) if has_cell_at(y, x+1)
+        neighbours.push(@board[y+1][x-1+shift]) if has_cell_at(y+1, x-1+shift)
+        neighbours.push(@board[y+1][x+shift]) if has_cell_at(y+1, x+shift)
+        neighbours.push(@board[y][x-1]) if has_cell_at(y, x-1)
+        @board[y][x].set('neighbours', neighbours)
     return
 
   @_newCellAt = (x, y) ->
