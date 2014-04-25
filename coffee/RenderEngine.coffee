@@ -74,6 +74,7 @@ Graphics =
     el.attr('d', Helpers.arc.getD(0, 2 * Math.PI * progress, inner_radius, outer_radius))
 
   changeArrowDirection: (el, direction, colors) ->
+    return el.select('polyline').style('visibility', 'hidden') unless direction
     el.attr('transform', Helpers.arrow.getAngleBy(direction))
     el.select('polyline')
       .attr('fill', colors.fill)
@@ -307,8 +308,7 @@ Cell = Backbone.Model.extend
     colors = @get('colors')
     direction = @get('direction')
     el_arrow = @get('el_arrow')
-    if direction
-      Graphics.changeArrowDirection(el_arrow, direction, colors)
+    Graphics.changeArrowDirection(el_arrow, direction, colors)
 
   mousedownChanged: ->
     neighbours = @get('neighbours')
