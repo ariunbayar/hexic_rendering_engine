@@ -33,16 +33,3 @@ window.ticker = ->
     board[1][2] = [1, 25, 4]
     board[4][3] = [2, 30, 2]
   game.updateBoard(board)
-
-d3.selectAll('g').on('mouseover', ->
-  el = d3.select(this)
-  old_color = el.style('fill')
-  d3.select(this).select('polygon').transition()
-    .style('stroke-width', 3)
-    .style('fill-opacity', .5)
-)
-d3.selectAll('g').on('mouseout', ->
-  d3.select(this).select('polygon').transition()
-    .style('stroke-width', 0)
-    .style('fill-opacity', 1)
-)

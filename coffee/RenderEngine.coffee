@@ -78,6 +78,16 @@ Graphics =
       .attr('stroke', colors.stroke)
       .style('visibility', 'visible')
 
+  mouseoverHexagon: (el) ->
+    el.transition()
+      .style('stroke-width', 3)
+      .style('fill-opacity', .5)
+
+  mouseoutHexagon: (el) ->
+    el.transition()
+      .style('stroke-width', 0)
+      .style('fill-opacity', 1)
+
 Helpers =
   arc:
     getD: (start_angle, end_angle, inner_radius, outer_radius) ->
@@ -203,16 +213,22 @@ Cell = Backbone.Model.extend
     border = Settings.border
     colors = @get('colors')
     el_svg = @get('el_svg')
+
     el_container = Graphics.drawContainer(el_svg, coords.x, coords.y)
     el_hexagon = Graphics.drawHexagon(el_container, radius, border, colors)
     el_arrow = Graphics.drawArrow(el_container, colors)
+
+    # set the initialized elements
     @set('el_container', el_container)
     @set('el_arrow', el_arrow)
     @set('el_hexagon', el_hexagon)
 
+    # bind events
     @on('change:power', @powerChanged, @)
     @on('change:colors', @colorsChanged, @)
     @on('change:direction', @directionChanged, @)
+    el_container.on('mouseover', -> Graphics.mouseoverHexagon(el_hexagon))
+    el_container.on('mouseout',  -> Graphics.mouseoutHexagon(el_hexagon))
 
   colorsChanged: ->
     colors = @get('colors')
@@ -226,6 +242,7 @@ Cell = Backbone.Model.extend
       Graphics.changeCircleColor(el_circle, c)
     if el_arc
       Graphics.changeArcColor(el_arc, colors.fill)
+
   powerChanged: ->
     power = @get('power')
     return if power == null
