@@ -243,16 +243,39 @@ Cell = Backbone.Model.extend
     el_container.on('mouseover', ->
       el_arrow = self.get('el_arrow')
       Graphics.mouseoverHexagon(el_hexagon)
-      for cell in self.get('neighbours')
+      for i, cell of self.get('neighbours')
         Graphics.mouseoverHexagon(cell.get('el_hexagon'))
-      for el in self.get('neighbours')
-        if el.cid == self.hoveredby then direction = el.cid
+        if cell.cid == self.hoveredby then direction = cell.cid
       if direction
         Graphics.changeArrowDirection(el_arrow, direction, colors)
-    )
+
+      chain_hover = (cell) ->
+        arr = cell.get('el_arrow')
+        el = arr.select('polyline')
+        old_stroke = el.attr('stroke')
+        old_fill = el.attr('fill')
+        old_stroke_width = el.attr('stroke-width')
+        f = ->
+          d = cell.get('direction')
+          if d
+            ns = cell.get('neighbours')
+            if d of ns
+              _cell = ns[d]
+              chain_hover(_cell)
+        el.transition()
+          .attr('stroke_width', 3)
+          .attr('stroke', '#ff9')
+          .attr('fill', '#ff9')
+          .each('end', f)
+          .transition()
+          .attr('stroke_width', old_stroke_width)
+          .attr('stroke', old_stroke)
+          .attr('fill', old_fill)
+      chain_hover(self)
+    , false)
     el_container.on('mouseout',  ->
       Graphics.mouseoutHexagon(el_hexagon)
-      for cell in self.get('neighbours')
+      for i, cell of self.get('neighbours')
         Graphics.mouseoutHexagon(cell.get('el_hexagon'))
     )
 
@@ -344,12 +367,12 @@ class Engine
         x = parseInt(x)
         shift = if y % 2 then 0 else 1
         neighbours = []
-        neighbours.push(@board[y-1][x-1+shift]) if has_cell_at(y-1, x-1+shift)
-        neighbours.push(@board[y-1][x+shift]) if has_cell_at(y-1, x+shift)
-        neighbours.push(@board[y][x+1]) if has_cell_at(y, x+1)
-        neighbours.push(@board[y+1][x-1+shift]) if has_cell_at(y+1, x-1+shift)
-        neighbours.push(@board[y+1][x+shift]) if has_cell_at(y+1, x+shift)
-        neighbours.push(@board[y][x-1]) if has_cell_at(y, x-1)
+        neighbours[1] = @board[y-1][x-1+shift]  if has_cell_at(y-1, x-1+shift)
+        neighbours[2] = @board[y-1][x+shift]    if has_cell_at(y-1, x+shift)
+        neighbours[3] = @board[y][x+1]          if has_cell_at(y, x+1)
+        neighbours[4] = @board[y+1][x+shift]    if has_cell_at(y+1, x+shift)
+        neighbours[5] = @board[y+1][x-1+shift]  if has_cell_at(y+1, x-1+shift)
+        neighbours[6] = @board[y][x-1]          if has_cell_at(y, x-1)
         @board[y][x].set('neighbours', neighbours)
     return
 
