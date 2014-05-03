@@ -1,368 +1,392 @@
-if typeof(d3) == "undefined"
+unless d3?
   console.log "d3.js is not included. Consult with d3js.org"
   return
-if typeof(Backbone) == "undefined"
+unless Backbone?
   console.log "backbone.js is not included. Consult with backbonejs.org"
   return
 
+Cache =
+  get: (key, default_value) ->
+    if key of @ then @[key] else default_value
+
+  set: (key, value) ->
+    @[key] = value
+
+  call: (key, func, context) ->
+    unless key of @
+      @[key] = func.apply(context, Array.prototype.slice.call(arguments, 3))
+    @[key]
+
 Graphics =
   createSVG: (container_selector, width, height) ->
-    d3.select(container_selector).append('svg')
+    svg = d3.select(container_selector).append('svg')
       .attr('width', width)
       .attr('height', height)
+    svg.on('touchstart', ->
+      svg.on('mousemove', null)
+      svg.on('touchstart', null)
+      Graphics.touch_detected = true
+    ).on('mousemove', ->
+      svg.on('mousemove', null)
+      svg.on('touchstart', null)
+      Graphics.mouse_detected = true
+    )
+    # TODO remove. Debug only
+    svg.append('circle')
+      .attr('id', 'debug_el')
+      .attr('r', 3)
+      .attr('cx', 0)
+      .attr('cy', 0)
+    return svg
 
-  drawContainer: (svg, x, y) ->
-    svg.append('g')
-      .attr('transform', "translate(#{x}, #{y})")
+  board_offset: {x: 30, y: 30}
 
-  drawArc: (container, inner_radius, outer_radius, fill_percent, color) ->
-    container.append('path')
-      .attr('fill', color)
-      .attr('d', Helpers.arc.getD(0, 2 * Math.PI * fill_percent, inner_radius, outer_radius))
+  touch_detected: false
+  mouse_detected: false
 
-  drawCircle: (container, r, border, colors) ->
-    container.append('circle')
-      .attr('r', r)
-      .attr('stroke', colors.stroke)
-      .attr('stroke-width', border)
-      .attr('fill', colors.fill)
+  Cell: Backbone.Model.extend({
+    initialize: ->
+      # required attrs: svg, color, coord
+      @initCoord()
+      @initContainer()
+      @initCircle()
+      @initArc()
+      @initHexagon()
+      @initArrow()
+      @on('change:power', @changedPower, @)
+      @on('change:color', @changedColor, @)
+      @on('change:direction', @changedDirection, @)
 
-  drawHexagon: (container, r, border, colors) ->
-    container.append("svg:polygon")
-      .attr('fill', colors.fill)
-      .attr('stroke', colors.stroke)
-      .attr('stroke-width', border)
-      .style('stroke-linejoin', 'round')
-      .attr("points", Helpers.polygon.getPoints(0, 0, 6, r))
+    initCoord: ->
+      coord = @get('coord')
+      sin_60 = Math.sin(Math.PI / 3)
+      offset_x = 2 * 30 * sin_60
+      offset_y = 2 * 30 * sin_60 * sin_60
+      shift_x = if coord.y % 2 then 0 else offset_x / 2
+      coord.x = coord.x * offset_x + Graphics.board_offset.x + shift_x
+      coord.y = coord.y * offset_y + Graphics.board_offset.y
+      @set('coord', coord)
 
-  drawArrow: (container, colors) ->
-    g = container.append('g')
-    g.append("svg:polyline")
-      .attr('stroke-width', 1)
-      .attr("points", "0,0 10,10 0,5 -10,10 0,0")
-      .attr('transform', "translate(0, -32)")
-      .style('visibility', 'hidden')
-    return g
+    initContainer: ->
+      container = @get('svg').append('g')
+      coord = @get('coord')
+      container.attr('transform', "translate(#{coord.x}, #{coord.y})")
+      @set('container', container)
 
-  changeHexagonColor: (el, colors) ->
-    el_parent = d3.select(el[0][0].parentNode)
-    el_parent.transition()
-      .attr('fill-opacity', 0)
-      .attr('stroke-opacity', 0)
-      .each('end', ->
-        el.attr('fill', colors.fill)
-          .attr('stroke', colors.stroke)
-      )
-      .transition()
-      .attr('fill-opacity', 1)
-      .attr('stroke-opacity', 1)
+    initCircle: ->
+      [radius, angle] = @_getRadiusAndAngle()
+      container = @get('container')
+      color = @get('color')
 
-  changeArcColor: (el, color) ->
-    el.attr('fill', color)
+      circle = container.append('circle')
+        .attr('r', radius)
+        .attr('fill', color)
+      @set('circle', circle)
 
-  changeCircleColor: (el, colors) ->
-    el.attr('stroke', colors.stroke)
-      .attr('fill', colors.fill)
+    initArc: ->
+      [radius, angle] = @_getRadiusAndAngle()
+      container = @get('container')
+      color = @get('color')
 
-  changeCircleRadius: (el, radius) ->
-    el.transition()
-      .duration(750)
-      .attr('r', radius)
-      .ease('elastic')
+      d = d3.svg.arc()
+        .startAngle(0)
+        .innerRadius(radius)
+        .outerRadius(radius + 3)
+        .endAngle(angle)
+      arc = container.append('path')
+        .attr('opacity', .5)
+        .attr('fill', color)
+        .attr('stroke', color)
+        .attr('stroke-width', 2)
+        .attr('stroke-linejoin', 'round')
+        .attr('d', d)
+      @set('arc', arc)
 
-  changeArcRadius: (el, inner_radius, outer_radius, progress) ->
-    el.attr('d', Helpers.arc.getD(0, 2 * Math.PI * progress, inner_radius, outer_radius))
+    initHexagon: ->
+      container = @get('container')
+      color = @get('color')
 
-  changeArrowDirection: (el, direction, colors) ->
-    return el.select('polyline').style('visibility', 'hidden') unless direction
-    el.attr('transform', Helpers.arrow.getAngleBy(direction))
-    el.select('polyline')
-      .attr('fill', colors.fill)
-      .attr('stroke', colors.stroke)
-      .style('stroke-linecap', 'round')
-      .style('stroke-linejoin', 'round')
-      .style('visibility', 'visible')
+      points = ""
+      angle = Math.PI / 3
+      for i in [0...6]
+        currX = Math.cos(i * angle + angle/2) * 18
+        currY = Math.sin(i * angle + angle/2) * 18
+        points += (i and "," or "") + currX + "," + currY
 
-  mouseoverHexagon: (el) ->
-    el.transition()
-      .style('stroke-width', 3)
-      .style('fill-opacity', .5)
+      hexagon = container.append("svg:polygon")
+        .attr('fill', color)
+        .attr('stroke', color)
+        .attr('stroke-width', 18)
+        .attr('opacity', .5)
+        .attr('points', points)
+        .style('stroke-linejoin', 'round')
+      @set('hexagon', hexagon)
 
-  mouseoutHexagon: (el) ->
-    el.transition()
-      .style('stroke-width', 0)
-      .style('fill-opacity', 1)
+      self = @
+      hexagon.on('mousedown',  -> self.mouseDown.call(self))
+      hexagon.on('mouseup',    -> self.mouseUp.call(self))
+      hexagon.on('mouseover',  -> self.mouseOver.call(self))
+      hexagon.on('mouseout',   -> self.mouseOut.call(self))
+      hexagon.on('touchstart', -> self.touchStart.call(self))
+      hexagon.on('touchmove',  -> self.touchMove.call(self))
+      hexagon.on('touchend',   -> self.touchEnd.call(self))
+      #hexagon.on('touchcancel', -> self.touchCancel.call(self))
 
-Helpers =
-  arc:
-    getD: (start_angle, end_angle, inner_radius, outer_radius) ->
-      d3.svg.arc()
-        .startAngle(start_angle)
-        .innerRadius(inner_radius)
-        .outerRadius(outer_radius)
-        .endAngle(end_angle)
+    initArrow: ->
+      container = @get('container')
+      color = @get('color')
 
-  polygon:
-    getStarPoints: (centerX, centerY, arms, outerRadius, innerRadius) ->
-      results = ""
-      angle = Math.PI / arms
+      arrow = container.append("svg:polygon")
+        .attr('stroke', color)
+        .attr('stroke-width', 5)
+        .attr("points", "0,0 10,10 0,5 -10,10 0,0")
+        .attr('stroke-linejoin', 'round')
+        .attr('visibility', 'hidden')
+      @set('arrow', arrow)
+      if @get('direction')
+        @changedDirection()
 
-      for i in [0...(2 * arms)]
-        # Use outer or inner radius depending on what iteration we are in.
-        r = if (i & 1) == 0 then outerRadius else innerRadius
-
-        currX = centerX + Math.cos(i * angle + angle) * r
-        currY = centerY + Math.sin(i * angle + angle) * r
-
-        # Our first time we simply append the coordinates, subsequet times
-        # we append a ", " to distinguish each coordinate pair.
-        if i == 0
-          results = currX + "," + currY
+    _powerToRadiusAndAngle: (power) ->
+      angle = 0
+      p = power
+      max_radius = 21
+      for radius in [3..max_radius] by 3
+        perimeter = radius * 2 * Math.PI
+        if p > perimeter
+          if radius >= max_radius
+            break
+            #throw new Error("maximum power exceeded for #{power}")
+          p -= perimeter
         else
-          results += ", " + currX + "," + currY
+          angle = 2 * Math.PI * p / perimeter
+          break
+      return [radius, angle]
 
-      return results
+    _getRadiusAndAngle: ->
+      power = @get('power')
+      fn = @_powerToRadiusAndAngle
+      angle = Cache.call("angle_for_#{power}", fn, @, power)
 
-    getPoints: (centerX, centerY, arms, radius) ->
-      results = ""
-      angle = Math.PI * 2 / arms
+    changedPower: ->
+      [radius, angle] = @_getRadiusAndAngle()
+      d = d3.svg.arc()
+        .startAngle(0)
+        .innerRadius(radius)
+        .outerRadius(radius + 3)
+        .endAngle(angle)
+      @get('arc').attr('d', d)
+      @get('circle').attr('r', radius)
 
-      for i in [0...arms]
-        currX = centerX + Math.cos(i * angle + angle/2) * radius
-        currY = centerY + Math.sin(i * angle + angle/2) * radius
+    changedColor: ->
+      color = @get('color')
+      @get('circle')
+        .attr('fill', color)
+      @get('arc')
+        .attr('stroke', color)
+        .attr('fill', color)
+      @get('hexagon')
+        .attr('stroke', color)
+        .attr('fill', color)
+      @get('arrow')
+        .attr('stroke', color)
+      container = @get('container')
+      t = container.attr('transform')
+      container
+        .attr('transform', t + ' scale(0.5, 0.5)')
+        .transition()
+        .attr('transform', t)
 
-        # Our first time we simply append the coordinates, subsequet times
-        # we append a ", " to distinguish each coordinate pair.
-        if i == 0
-            results = currX + "," + currY
-        else
-            results += ", " + currX + "," + currY
+    changedDirection: ->
+      arrow = @get('arrow')
+      d = parseInt(@get('direction'))
+      direction = d == 1 and 6 or d - 1
+      arrow.style('visibility', direction and 'visible' or 'hidden')
+      return unless direction
+      t = d3.transform()
+      t.rotate = direction * 60 - 30
+      coord_x = Math.cos((direction - 2) * Math.PI / 3) * 30
+      coord_y = Math.sin((direction - 2) * Math.PI / 3) * 30
+      t.translate = [coord_x, coord_y]
+      arrow.attr('transform', t.toString())
 
-      return results
+    mouseDown: ->
+      return if Graphics.touch_detected
+      @get('parent').dragstart.call(@get('parent'))
 
-  arrow:
-    getAngleBy: (direction) ->
-      if direction == 1
-        degrees = " rotate(330)"
-      if direction == 2
-        degrees = " rotate(35)"
-      if direction == 3
-        degrees = " rotate(90)"
-      if direction == 4
-        degrees = " rotate(150)"
-      if direction == 5
-        degrees = " rotate(210)"
-      if direction == 6
-        degrees = " rotate(270)"
-      return degrees
+    mouseUp: ->
+      return if Graphics.touch_detected
+      @get('parent').dragstop.call(@get('parent'))
 
-  colors: (r, g, b) ->
-    stroke: "rgba(#{r}, #{g}, #{b}, 1)"
-    fill: "rgba(#{r}, #{g}, #{b}, .3)"
+    mouseOver: ->
+      return if Graphics.touch_detected
+      @get('parent').dragover.call(@get('parent'))
+      @get('hexagon')
+        .transition()
+        .attr('stroke-width', 24)
+        .ease('easeInOutCirc')
 
-  coords: (position) ->
-    coord_x = position.x * Settings.offset_x + Settings.board_offset_x
-    if position.y % 2 == 0
-      coord_x += Settings.offset_x / 2
-    coord_y = position.y * Settings.offset_y + Settings.board_offset_y
-    return {x: coord_x, y: coord_y }
+    mouseOut: ->
+      return if Graphics.touch_detected
+      @get('hexagon')
+        .transition()
+        .attr('stroke-width', 18)
+        .ease('easeInOutCirc')
 
-  getRadiusAndProgressFor: (power) ->
-    level = 0
-    radius_diff = Settings.radiuses[1] - Settings.radiuses[0]
-    while (true)
-      if not (level of Settings.radiuses)
-        power = 0
-        break
-      r = Settings.radiuses[level]
-      perimeter = 2 * Math.PI * r
-      if power < perimeter
-        break
-      power -= perimeter
-      level++
-    r_arc = r
-    r_circle = if r - radius_diff > 0 then r - radius_diff else null
-    progress = power / perimeter
-    return [r_circle, r_arc, progress]
+    touchStart: ->
+      return if Graphics.mouse_detected
+      @get('parent').dragstart.call(@get('parent'))
 
-Settings =
-  radius:   29
-  radiuses: [3, 6, 9, 12, 15, 18, 21, 24, 27]
-  border:   0
-  offset_x: 2 * 30 * Math.sin(Math.PI / 3)
-  offset_y: 2 * 30 * Math.sin(Math.PI / 3) * Math.sin(Math.PI / 3)
-  board_offset_x: 30
-  board_offset_y: 30
-  colors:
-    red: Helpers.colors(255, 0, 0)
-    blue: Helpers.colors(0, 0, 255)
-    gray: Helpers.colors(127, 127, 127)
-    inactive: Helpers.colors(220, 220, 220)
+    touchMove: ->
+      return if Graphics.mouse_detected
+      e = d3.event
+      point = @_translate2local(e.touches[0].clientX, e.touches[0].clientY)
+      @get('parent').dragmove.call(@get('parent'))
+      # TODO check within neighbours
+      if @is_point_inside(point)
+        d3.select('#debug_el').attr('cx', point.x).attr('cy', point.y)
+
+    touchEnd: ->
+      return if Graphics.mouse_detected
+      @get('parent').dragstop.call(@get('parent'))
+
+    touchCancel: ->
+      return if Graphics.mouse_detected
+      console.log('touch cancel')
+      @get('parent').dragstop.call(@get('parent'))
+
+    _translate2local: (x, y) ->
+      # TODO make sure this method reports when browser type error etc.
+      # or probably multi browser support
+      rect = @get('svg')[0][0].getBoundingClientRect()
+      _x = x - rect.left
+      _y = y - rect.top
+      return {x: _x, y: _y}
+
+    is_point_inside: (point) ->
+      # credit to:
+      # http://www.playchilla.com/how-to-check-if-a-point-is-inside-a-hexagon
+      coord = @get('coord')
+      _vert = 27 / 2
+      _hori = 27 * Math.sqrt(3) / 2
+      q2x = Math.abs(point.x - coord.x)
+      q2y = Math.abs(point.y - coord.y)
+      return false if q2x > _hori || q2y > _vert*2
+      m = 2 * _vert * _hori - _vert * q2x - _hori * q2y
+      return m >= 0
+  })
 
 Cell = Backbone.Model.extend
   defaults:
-    el_svg: null
-    el_container: null
-    el_hexagon: null
-    el_circle: null
-    el_arc: null
-    el_arrow: null
-    position: null
-    colors: Settings.colors.inactive
-    power: null
-    direction: null
     neighbours: []
-    mousedown: false
+    power: 50
+    color: "#cccccc"
+    direction: 0
 
   initialize: ->
-    coords = Helpers.coords(@get('position'))
-    radius = Settings.radius
-    border = Settings.border
-    colors = @get('colors')
-    el_svg = @get('el_svg')
-
-    el_container = Graphics.drawContainer(el_svg, coords.x, coords.y)
-    el_hexagon = Graphics.drawHexagon(el_container, radius, border, colors)
-    el_arrow = Graphics.drawArrow(el_container, colors)
-
-    # set the initialized elements
-    @set('el_container', el_container)
-    @set('el_arrow', el_arrow)
-    @set('el_hexagon', el_hexagon)
-
-    # bind events
+    el = new Graphics.Cell
+      svg: @get('svg')
+      color: @get('color')
+      coord: _.clone(@get('coord'))
+      power: @get('power')
+      direction: @get('direction')
+      parent: @
+    @set('el', el)
     @on('change:power', @powerChanged, @)
-    @on('change:colors', @colorsChanged, @)
+    @on('change:color', @colorChanged, @)
     @on('change:direction', @directionChanged, @)
-    @on('change:mousedown', @mousedownChanged, @)
-    # TODO uncomment following 2 lines
-    #el_container.on('mouseover', -> Graphics.mouseoverHexagon(el_hexagon))
-    #el_container.on('mouseout',  -> Graphics.mouseoutHexagon(el_hexagon))
-    # TODO Debug only. remove followings when you uncomment above
-    self = @
-    el_container.on('mouseover', ->
-      el_arrow = self.get('el_arrow')
-      Graphics.mouseoverHexagon(el_hexagon)
-      for i, cell of self.get('neighbours')
-        Graphics.mouseoverHexagon(cell.get('el_hexagon'))
-        if cell.cid == self.hoveredby then direction = cell.cid
-      if direction
-        Graphics.changeArrowDirection(el_arrow, direction, colors)
 
-      chain_hover = (cell) ->
-        arr = cell.get('el_arrow')
-        el = arr.select('polyline')
-        old_stroke = el.attr('stroke')
-        old_fill = el.attr('fill')
-        old_stroke_width = el.attr('stroke-width')
-        f = ->
-          d = cell.get('direction')
-          if d
-            ns = cell.get('neighbours')
-            if d of ns
-              _cell = ns[d]
-              chain_hover(_cell)
-        el.transition()
-          .attr('stroke_width', 3)
-          .attr('stroke', '#ff9')
-          .attr('fill', '#ff9')
-          .each('end', f)
-          .transition()
-          .attr('stroke_width', old_stroke_width)
-          .attr('stroke', old_stroke)
-          .attr('fill', old_fill)
-      chain_hover(self)
-    , false)
-    el_container.on('mouseout',  ->
-      Graphics.mouseoutHexagon(el_hexagon)
-      for i, cell of self.get('neighbours')
-        Graphics.mouseoutHexagon(cell.get('el_hexagon'))
-    )
+  dragstart: ->
+    console.log('dragstart')
+    for direction, cell of @get('neighbours')
+      cell.set('drag_src', [direction, @])
 
-    el_container.on('mousedown', ->
-      self.set('mousedown', true)
-      self.set('from', self)
-    )
+  dragmove: ->
+    console.log('dragmove')
 
-    el_container.on('mouseup', ->
-    )
+  dragover: ->
+    console.log('dragover')
+    drag_src_info = @get('drag_src')
+    if drag_src_info
+      [direction, drag_src] = drag_src_info
+      src_el = drag_src.get('el')
+      src_el.set('direction', direction)
+      src_el.changedDirection()
 
-  colorsChanged: ->
-    colors = @get('colors')
-    el_hexagon = @get('el_hexagon')
-    el_circle = @get('el_circle')
-    el_arc = @get('el_arc')
-    if el_hexagon
-      Graphics.changeHexagonColor(el_hexagon, colors)
-    if el_circle
-      c = {stroke: colors.fill, fill: colors.stroke }
-      Graphics.changeCircleColor(el_circle, c)
-    if el_arc
-      Graphics.changeArcColor(el_arc, colors.fill)
+  dragstop: ->
+    console.log('dragstop')
+    drag_src_info = @get('drag_src')
+    if drag_src_info
+      [direction, drag_src] = drag_src_info
+      for direction, cell of drag_src.get('neighbours')
+        cell.set('drag_src', null)
+      # triggers move action
+      src_coord = drag_src.get('coord')
+      dest_coord = @get('coord')
+      args = [src_coord.x, src_coord.y, dest_coord.x, dest_coord.y]
+      @get('renderengine').move.apply(@get('renderengine'), args)
+
+  colorChanged: ->
+    @get('el').set('color', @get('color'))
 
   powerChanged: ->
-    power = @get('power')
-    return if power == null
-    coords = Helpers.coords(@get('position'))
-    el_container = @get('el_container')
-    colors = @get('colors')
-    border = Settings.border
-    [r_circle, r_arc, progress] = Helpers.getRadiusAndProgressFor(power)
-
-    # resize arc depending on radius and percent calculated from power
-    el_arc = @get('el_arc')
-    if el_arc == null
-      el_arc = Graphics.drawArc(el_container, 0, r_arc, progress, colors.fill)
-      @set('el_arc', el_arc)
-    else
-      Graphics.changeArcRadius(el_arc, 0, r_arc, progress)
-
-    # resize circle depending on radius calculated from power
-    return if r_circle == null
-    el_circle = @get('el_circle')
-    if el_circle == null
-      c = {stroke: colors.fill, fill: colors.stroke }
-      el_circle = Graphics.drawCircle(el_container, r_circle, border, c)
-      @set('el_circle', el_circle)
-    else
-      Graphics.changeCircleRadius(el_circle, r_circle)
+    @get('el').set('power', @get('power'))
 
   directionChanged: ->
-    colors = @get('colors')
-    direction = @get('direction')
-    el_arrow = @get('el_arrow')
-    Graphics.changeArrowDirection(el_arrow, direction, colors)
+    @get('el').set('direction', @get('direction'))
 
-  mousedownChanged: ->
-    neighbours = @get('neighbours')
-    for el in neighbours
-      el.hoveredby = @.cid
-
-class Engine
+class RenderEngine
   board: []
   svg: null
+  colors:
+    red: "#F72700"
+    blue: "#447786"
+    gray: "#C8C8C8"
 
   constructor: (container_id, width, height) ->
     @svg = Graphics.createSVG(container_id, width, height)
 
-  updateBoard: (board) ->
-    # each cell has to be [<user_id>, <power>, <arrow_direction>]
-    for y of board
+  updateBoard: (board_users, board_powers, board_moves) ->
+    # board_users  : [[<user_id>, <user_id> ...], ...]
+    # board_powers : [[<power>, <power> ...], ...]
+    # board_moves  : [[<from_x>, <from_y>, <to_x>, <to_y>], ...]
+    # TODO optimize directions
+    directions = {}
+    for y of board_users
       @board[y] = [] if not (y of @board)
-      for x of board[y]
-        [user_id, power, direction] = board[y][x]
-        @board[y][x] = @_newCellAt(x, y) if not (x of @board[y])
-        @board[y][x].set('colors', @_getColor(user_id))
+      for x of board_users[y]
+        # TODO remove this legacy check
+        if typeof(board_users[y][x]) == "object"
+          [user_id, _dummy_color] = board_users[y][x]
+        else
+          user_id = board_users[y][x]
+
+        power = board_powers[y][x]
+        color = @_getColor(user_id)
+
+        @board[y][x] = @_newCellAt(x, y, color) if not (x of @board[y])
+
+        @board[y][x].set('color', color)
         @board[y][x].set('power', power)
-        @board[y][x].set('direction', direction)
+        d = @board[y][x].get('direction')
+        directions["#{y}_#{x}"] = d if d
+
+    # set directions
+    for [fx, fy, tx, ty] in board_moves
+      direction = @_getDirection(fx, fy, tx, ty)
+      if direction
+        @board[fy][fx].set('direction', direction)
+        delete directions["#{fy}_#{fx}"]
+    for pos of directions
+      [y, x] = pos.split('_')
+      @board[y][x].set('direction', 0)
 
     # set its neighbours
     has_cell_at = (y, x) ->
-      if y of board
-        return x of board[y]
+      if y of board_users
+        return x of board_users[y]
       return false
-    for y of board
-      for x of board[y]
+    for y of board_users
+      for x of board_users[y]
         y = parseInt(y)
         x = parseInt(x)
         shift = if y % 2 then 0 else 1
@@ -376,22 +400,37 @@ class Engine
         @board[y][x].set('neighbours', neighbours)
     return
 
-  _newCellAt: (x, y) ->
+  _getDirection: (fx, fy, tx, ty) ->
+    shift = if fy % 2 then 0 else 1
+    return 1 if ty == fy - 1 and tx == fx - 1 + shift
+    return 2 if ty == fy - 1 and tx == fx + shift
+    return 3 if ty == fy     and tx == fx + 1
+    return 4 if ty == fy + 1 and tx == fx + shift
+    return 5 if ty == fy + 1 and tx == fx - 1 + shift
+    return 6 if ty == fy     and tx == fx - 1
+    return 0
+
+  _newCellAt: (x, y, color) ->
     new Cell
-      el_svg: @svg
-      position: {x: x, y: y}
+      svg: @svg
+      color: color
+      coord: {x: x, y: y}
+      renderengine: @
 
   _getColor: (user_id) ->
     if not ('_colors_assigned' of @)
       @_colors_assigned = {}
-      @_colors_left = [Settings.colors.blue, Settings.colors.red]
+      @_colors_left = [@colors.blue, @colors.red]
     if user_id == 0
-      return Settings.colors.gray
+      return @colors.gray
     if user_id of @_colors_assigned
       return @_colors_assigned[user_id]
     if @_colors_left.length
       return @_colors_assigned[user_id] = @_colors_left.shift()
     num_users = ((i for i of @_colors_assigned).length + 1)
-    throw "not enough colors for #{num_users} users"
+    throw new Error "not enough colors for #{num_users} users"
 
-window.Engine = Engine
+  move: (fx, fy, tx, ty) ->
+    console.log(fx, fy, tx, ty, @)
+
+window.Engine = RenderEngine
