@@ -14,82 +14,11 @@
 <body>
 
 <div id="svg"></div>
-<svg id="test" style="width: 300px; height: 300px; background-color: #c9c9c9;">
-    <circle r="40" cx="50" cy="50" stroke="#ff00ff" stroke-width="2" fill-opacity="0"/>
-    <circle r="40" cx="150" cy="50" stroke="#ff00ff" stroke-width="2" fill-opacity="0"/>
-</svg>
-
 <script src="js/d3.js"></script>
 <script src="js/underscore-min.js"></script>
 <script src="js/backbone-min.js"></script>
 <script src="js/compiled/RenderEngine.js"></script>
 <script src="js/compiled/main.js"></script>
-
-
-<script src="js/jquery-2.0.3.min.js"></script>
-<script type="text/javascript" charset="utf-8">
-var isInsidePolygon = function (radius, _center, x, y){
-    var _vert = radius / 2;
-    var _hori = radius * Math.sqrt(3) / 2;
-    var q2x = Math.abs(x - _center.x);
-    var q2y = Math.abs(y - _center.y);
-    if (q2x > _hori || q2y > _vert*2) return false;
-    m = (2 * _vert * _hori - _vert * q2x - _hori * q2y);
-    return m >= 0;
-}
-var polygonAt = function(radius, x, y, id){
-    var points = "";
-    var angle = Math.PI / 3;
-    for (var i=0; i<6; i++){
-        currX = Math.cos(i * angle + angle/2) * radius
-        currY = Math.sin(i * angle + angle/2) * radius
-        points += (i ? "," : "") + currX + "," + currY
-    }
-    return d3.select('#test').append('polygon')
-        .attr('id', id)
-        .attr('fill', '#f00')
-        .attr('transform', 'translate(' + x + ',' + y + ')')
-        .attr('points', points);
-}
-var translate2local = function(x, y){
-    // TODO make sure this method reports when browser type error etc.
-    var rect = d3.select('#test')[0][0].getBoundingClientRect();
-    _x = x - rect.left;
-    _y = y - rect.top
-    return {x: _x, y: _y}
-}
-var trailMovingMouse = function(x, y){
-    var _polygon_center = {x: 150, y: 50};
-    var _polygon_radius = 40;
-    if (isInsidePolygon(_polygon_radius, _polygon_center, x, y)){
-        d3.select('#test').append('circle')
-            .attr('cx', x)
-            .attr('cy', y)
-            .attr('r', 5);
-    }
-}
-var fn = function(){
-    e = d3.event;
-    x = e.touches[0].clientX;
-    y = e.touches[0].clientY;
-    client = translate2local(x, y);
-    window.is_p2 = isInsidePolygon(40, {x: 150, y: 50}, client.x, client.y);
-    var id = $(e.target).attr('id');
-    //console.log(e.type, id, client.x, client.y);
-}
-$(function(){
-    //$('#test circle').on('touchstart', fn);
-    //$('#test circle').on('touchmove', fn);
-    //$('#test circle').on('touchend', fn);
-    //$('#test circle').on('mousemove', fn);
-    //$('#test circle').on('mouseover', fn);
-    p1 = polygonAt(40, 50, 50, 'p1');
-    p2 = polygonAt(40, 150, 50, 'p2');
-    p1.on('touchmove', fn);
-    p1.on('touchend', function(){ console.log(window.is_p2);});
-    //p2.on('touchstart', fn).on('touchmove', fn);
-})
-</script>
 
 </body>
 </html>

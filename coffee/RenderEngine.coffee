@@ -20,6 +20,7 @@ Cache =
 Graphics =
   board_offset: {x: 30, y: 30}
 
+  animate: true
   touch_detected: false
   mouse_detected: false
   rollback_queue: []
@@ -51,6 +52,7 @@ Graphics =
     self = @
     window.addEventListener('blur', -> self.rollbackActions.call(self))
     window.addEventListener('mouseup', -> self.rollbackActions.call(self))
+    window.addEventListener('touchmove', (e)-> e.preventDefault())
 
     # TODO remove. Debug only
     svg.append('circle')
@@ -217,6 +219,7 @@ Graphics =
         .attr('fill', color)
       @get('arrow')
         .attr('stroke', color)
+      return unless Graphics.animate
       container = @get('container')
       t = container.attr('transform')
       container
@@ -308,12 +311,18 @@ Graphics =
       return m >= 0
 
     animateHoverIn: ->
+      unless Graphics.animate
+        @get('hexagon').attr('stroke-width', 24)
+        return
       @get('hexagon')
         .transition()
         .attr('stroke-width', 24)
         .ease('easeInOutCirc')
 
     animateHoverOut: ->
+      unless Graphics.animate
+        @get('hexagon').attr('stroke-width', 18)
+        return
       @get('hexagon')
         .transition()
         .attr('stroke-width', 18)
@@ -353,10 +362,10 @@ Cell = Backbone.Model.extend
     ])
 
   dragmove: ->
-    console.debug('dragmove')
+    #console.debug('dragmove')
 
   dragover: ->
-    console.debug('dragover')
+    #console.debug('dragover')
     drag_src_info = @get('drag_src')
     return unless @get('enabled') or drag_src_info
     @get('el').animateHoverIn()
@@ -365,13 +374,13 @@ Cell = Backbone.Model.extend
       drag_src.get('el').tmpArrowTo(direction)
 
   dragout: ->
-    console.debug('dragout')
+    #console.debug('dragout')
     drag_src_info = @get('drag_src')
     return unless @get('enabled') or drag_src_info
     @get('el').animateHoverOut()
 
   dragstop: ->
-    console.debug('dragstop')
+    #console.debug('dragstop')
     drag_src_info = @get('drag_src')
     if drag_src_info
       @get('el').animateHoverOut()
