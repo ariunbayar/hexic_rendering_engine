@@ -18,6 +18,20 @@ Cache =
     @[key]
 
 Graphics =
+  board_offset: {x: 30, y: 30}
+
+  touch_detected: false
+  mouse_detected: false
+  rollback_queue: []
+
+  rollbackActions: ->
+    while item = @rollback_queue.shift()
+      [func, context, args] = item
+      if args
+        func.apply(context, args)
+      else
+        func.call(context)
+
   createSVG: (container_selector, width, height) ->
     svg = d3.select(container_selector).append('svg')
       .attr('width', width)
@@ -30,7 +44,14 @@ Graphics =
       svg.on('mousemove', null)
       svg.on('touchstart', null)
       Graphics.mouse_detected = true
+    ).on('contextmenu', ->
+      d3.event.preventDefault()
     )
+    # TODO make sure following events run for each client
+    self = @
+    window.addEventListener('blur', -> self.rollbackActions.call(self))
+    window.addEventListener('mouseup', -> self.rollbackActions.call(self))
+
     # TODO remove. Debug only
     svg.append('circle')
       .attr('id', 'debug_el')
@@ -38,11 +59,6 @@ Graphics =
       .attr('cx', 0)
       .attr('cy', 0)
     return svg
-
-  board_offset: {x: 30, y: 30}
-
-  touch_detected: false
-  mouse_detected: false
 
   Cell: Backbone.Model.extend({
     initialize: ->
@@ -53,6 +69,7 @@ Graphics =
       @initArc()
       @initHexagon()
       @initArrow()
+      @initTmpArrow()
       @on('change:power', @changedPower, @)
       @on('change:color', @changedColor, @)
       @on('change:direction', @changedDirection, @)
@@ -146,6 +163,17 @@ Graphics =
       if @get('direction')
         @changedDirection()
 
+    initTmpArrow: ->
+      return if @constructor.tmp_arrow
+      svg = @get('svg')
+      arrow = svg.append("svg:polygon")
+        .attr('stroke', '#ffff00')
+        .attr('stroke-width', 5)
+        .attr("points", "0,0 10,10 0,5 -10,10 0,0")
+        .attr('stroke-linejoin', 'round')
+        .attr('visibility', 'hidden')
+      @constructor.tmp_arrow = arrow
+
     _powerToRadiusAndAngle: (power) ->
       angle = 0
       p = power
@@ -196,41 +224,46 @@ Graphics =
         .transition()
         .attr('transform', t)
 
-    changedDirection: ->
-      arrow = @get('arrow')
-      d = parseInt(@get('direction'))
+    _transformArrow: (arrow, d, offset) ->
+      d = parseInt(d)
       direction = d == 1 and 6 or d - 1
-      arrow.style('visibility', direction and 'visible' or 'hidden')
-      return unless direction
+      arrow.style('visibility', direction > 0 and 'visible' or 'hidden')
+      return unless direction > 0
       t = d3.transform()
       t.rotate = direction * 60 - 30
       coord_x = Math.cos((direction - 2) * Math.PI / 3) * 30
       coord_y = Math.sin((direction - 2) * Math.PI / 3) * 30
-      t.translate = [coord_x, coord_y]
+      if offset
+        t.translate = [coord_x + offset.x, coord_y + offset.y]
+      else
+        t.translate = [coord_x, coord_y]
       arrow.attr('transform', t.toString())
+
+    changedDirection: ->
+      @_transformArrow(@get('arrow'), @get('direction'))
+
+    tmpArrowTo: (d) ->
+      return unless @constructor.tmp_arrow
+      @_transformArrow(@constructor.tmp_arrow, d, @get('coord'))
 
     mouseDown: ->
       return if Graphics.touch_detected
+      Graphics.rollbackActions()
       @get('parent').dragstart.call(@get('parent'))
 
     mouseUp: ->
       return if Graphics.touch_detected
       @get('parent').dragstop.call(@get('parent'))
+      Graphics.rollbackActions()
 
     mouseOver: ->
       return if Graphics.touch_detected
       @get('parent').dragover.call(@get('parent'))
-      @get('hexagon')
-        .transition()
-        .attr('stroke-width', 24)
-        .ease('easeInOutCirc')
 
     mouseOut: ->
       return if Graphics.touch_detected
-      @get('hexagon')
-        .transition()
-        .attr('stroke-width', 18)
-        .ease('easeInOutCirc')
+      @tmpArrowTo(0)
+      @get('parent').dragout.call(@get('parent'))
 
     touchStart: ->
       return if Graphics.mouse_detected
@@ -273,6 +306,19 @@ Graphics =
       return false if q2x > _hori || q2y > _vert*2
       m = 2 * _vert * _hori - _vert * q2x - _hori * q2y
       return m >= 0
+
+    animateHoverIn: ->
+      @get('hexagon')
+        .transition()
+        .attr('stroke-width', 24)
+        .ease('easeInOutCirc')
+
+    animateHoverOut: ->
+      @get('hexagon')
+        .transition()
+        .attr('stroke-width', 18)
+        .ease('easeInOutCirc')
+
   })
 
 Cell = Backbone.Model.extend
@@ -296,29 +342,40 @@ Cell = Backbone.Model.extend
     @on('change:direction', @directionChanged, @)
 
   dragstart: ->
-    console.log('dragstart')
+    return unless @get('enabled')
     for direction, cell of @get('neighbours')
       cell.set('drag_src', [direction, @])
+    Graphics.rollback_queue.push([
+      ->
+        for direction, cell of @get('neighbours')
+          cell.set('drag_src', null)
+      , @
+    ])
 
   dragmove: ->
-    console.log('dragmove')
+    console.debug('dragmove')
 
   dragover: ->
-    console.log('dragover')
+    console.debug('dragover')
     drag_src_info = @get('drag_src')
+    return unless @get('enabled') or drag_src_info
+    @get('el').animateHoverIn()
     if drag_src_info
       [direction, drag_src] = drag_src_info
-      src_el = drag_src.get('el')
-      src_el.set('direction', direction)
-      src_el.changedDirection()
+      drag_src.get('el').tmpArrowTo(direction)
+
+  dragout: ->
+    console.debug('dragout')
+    drag_src_info = @get('drag_src')
+    return unless @get('enabled') or drag_src_info
+    @get('el').animateHoverOut()
 
   dragstop: ->
-    console.log('dragstop')
+    console.debug('dragstop')
     drag_src_info = @get('drag_src')
     if drag_src_info
+      @get('el').animateHoverOut()
       [direction, drag_src] = drag_src_info
-      for direction, cell of drag_src.get('neighbours')
-        cell.set('drag_src', null)
       # triggers move action
       src_coord = drag_src.get('coord')
       dest_coord = @get('coord')
@@ -337,13 +394,15 @@ Cell = Backbone.Model.extend
 class RenderEngine
   board: []
   svg: null
+  user_id: null
   colors:
     red: "#F72700"
     blue: "#447786"
     gray: "#C8C8C8"
 
-  constructor: (container_id, width, height) ->
+  constructor: (container_id, width, height, user_id) ->
     @svg = Graphics.createSVG(container_id, width, height)
+    @user_id = user_id
 
   updateBoard: (board_users, board_powers, board_moves) ->
     # board_users  : [[<user_id>, <user_id> ...], ...]
@@ -367,6 +426,7 @@ class RenderEngine
 
         @board[y][x].set('color', color)
         @board[y][x].set('power', power)
+        @board[y][x].set('enabled', user_id == @user_id)
         d = @board[y][x].get('direction')
         directions["#{y}_#{x}"] = d if d
 

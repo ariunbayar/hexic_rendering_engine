@@ -18,7 +18,8 @@ board_moves = [
   [5, 5, 4, 4]
 ]
 window.board_moves = board_moves
-window.game = new Engine('#svg', 350, 300)
+user_id = 2
+window.game = new Engine('#svg', 350, 300, user_id)
 game.updateBoard(board_users, board_powers, board_moves)
 interval = 2000
 timer = setInterval('ticker()', interval)
