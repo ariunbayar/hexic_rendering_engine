@@ -53,13 +53,8 @@ Graphics =
     window.addEventListener('blur', -> self.rollbackActions.call(self))
     window.addEventListener('mouseup', -> self.rollbackActions.call(self))
     window.addEventListener('touchmove', (e)-> e.preventDefault())
-
-    # TODO remove. Debug only
-    svg.append('circle')
-      .attr('id', 'debug_el')
-      .attr('r', 3)
-      .attr('cx', 0)
-      .attr('cy', 0)
+    svg.append('g').attr('id', 'layer1')
+    svg.append('g').attr('id', 'layer2')
     return svg
 
   Cell: Backbone.Model.extend({
@@ -87,7 +82,7 @@ Graphics =
       @set('coord', coord)
 
     initContainer: ->
-      container = @get('svg').append('g')
+      container = @get('svg').select('#layer1').append('g')
       coord = @get('coord')
       container.attr('transform', "translate(#{coord.x}, #{coord.y})")
       @set('container', container)
@@ -149,10 +144,9 @@ Graphics =
       hexagon.on('touchstart', -> self.touchStart.call(self))
       hexagon.on('touchmove',  -> self.touchMove.call(self))
       hexagon.on('touchend',   -> self.touchEnd.call(self))
-      #hexagon.on('touchcancel', -> self.touchCancel.call(self))
 
     initArrow: ->
-      container = @get('container')
+      container = @get('svg').select('#layer2').append('g')
       color = @get('color')
 
       arrow = container.append("svg:polygon")
@@ -243,7 +237,7 @@ Graphics =
       arrow.attr('transform', t.toString())
 
     changedDirection: ->
-      @_transformArrow(@get('arrow'), @get('direction'))
+      @_transformArrow(@get('arrow'), @get('direction'), @get('coord'))
 
     tmpArrowTo: (d) ->
       return unless @constructor.tmp_arrow
@@ -270,42 +264,53 @@ Graphics =
 
     touchStart: ->
       return if Graphics.mouse_detected
-      @get('parent').dragstart.call(@get('parent'))
+      Graphics.rollbackActions()
+      @get('parent').dragstart()
 
     touchMove: ->
       return if Graphics.mouse_detected
-      e = d3.event
-      point = @_translate2local(e.touches[0].clientX, e.touches[0].clientY)
-      @get('parent').dragmove.call(@get('parent'))
-      # TODO check within neighbours
-      if @is_point_inside(point)
-        d3.select('#debug_el').attr('cx', point.x).attr('cy', point.y)
+      [x, y] = d3.mouse(@get('svg')[0][0])
+      if @isPointInside(x, y)
+        return if @get('_is_hovered')
+        @set('_is_hovered', true)
+        @get('parent').dragover()
+      else
+        if @get('_is_hovered')
+          @set('_is_hovered', false)
+          @get('parent').dragout()
+        for el in @get('parent').getNeighbourElements()
+          if el.isPointInside(x, y)
+            continue if el.get('_is_hovered')
+            el.set('_is_hovered', true)
+            el.get('parent').dragover()
+          else
+            continue unless el.get('_is_hovered')
+            el.set('_is_hovered', false)
+            el.get('parent').dragout()
 
     touchEnd: ->
       return if Graphics.mouse_detected
-      @get('parent').dragstop.call(@get('parent'))
+      [x, y] = d3.mouse(@get('svg')[0][0])
+      cur_el = null
+      if @isPointInside(x, y)
+        cur_el = @
+      else
+        for el in @get('parent').getNeighbourElements()
+          if el.isPointInside(x, y)
+            cur_el = el
+      if cur_el
+        if cur_el.get('_is_hovered')
+          cur_el.get('parent').dragout()
+        cur_el.get('parent').dragstop()
+      @tmpArrowTo(0)
+      Graphics.rollbackActions()
 
-    touchCancel: ->
-      return if Graphics.mouse_detected
-      console.log('touch cancel')
-      @get('parent').dragstop.call(@get('parent'))
-
-    _translate2local: (x, y) ->
-      # TODO make sure this method reports when browser type error etc.
-      # or probably multi browser support
-      rect = @get('svg')[0][0].getBoundingClientRect()
-      _x = x - rect.left
-      _y = y - rect.top
-      return {x: _x, y: _y}
-
-    is_point_inside: (point) ->
-      # credit to:
-      # http://www.playchilla.com/how-to-check-if-a-point-is-inside-a-hexagon
+    isPointInside: (x, y) ->
       coord = @get('coord')
       _vert = 27 / 2
       _hori = 27 * Math.sqrt(3) / 2
-      q2x = Math.abs(point.x - coord.x)
-      q2y = Math.abs(point.y - coord.y)
+      q2x = Math.abs(x - coord.x)
+      q2y = Math.abs(y - coord.y)
       return false if q2x > _hori || q2y > _vert*2
       m = 2 * _vert * _hori - _vert * q2x - _hori * q2y
       return m >= 0
@@ -327,7 +332,6 @@ Graphics =
         .transition()
         .attr('stroke-width', 18)
         .ease('easeInOutCirc')
-
   })
 
 Cell = Backbone.Model.extend
@@ -361,11 +365,7 @@ Cell = Backbone.Model.extend
       , @
     ])
 
-  dragmove: ->
-    #console.debug('dragmove')
-
   dragover: ->
-    #console.debug('dragover')
     drag_src_info = @get('drag_src')
     return unless @get('enabled') or drag_src_info
     @get('el').animateHoverIn()
@@ -374,13 +374,11 @@ Cell = Backbone.Model.extend
       drag_src.get('el').tmpArrowTo(direction)
 
   dragout: ->
-    #console.debug('dragout')
     drag_src_info = @get('drag_src')
     return unless @get('enabled') or drag_src_info
     @get('el').animateHoverOut()
 
   dragstop: ->
-    #console.debug('dragstop')
     drag_src_info = @get('drag_src')
     if drag_src_info
       @get('el').animateHoverOut()
@@ -390,6 +388,9 @@ Cell = Backbone.Model.extend
       dest_coord = @get('coord')
       args = [src_coord.x, src_coord.y, dest_coord.x, dest_coord.y]
       @get('renderengine').move.apply(@get('renderengine'), args)
+
+  getNeighbourElements: ->
+    (cell.get('el') for d, cell of @get('neighbours'))
 
   colorChanged: ->
     @get('el').set('color', @get('color'))
@@ -502,4 +503,4 @@ class RenderEngine
   move: (fx, fy, tx, ty) ->
     console.log(fx, fy, tx, ty, @)
 
-window.Engine = RenderEngine
+@Engine = RenderEngine
