@@ -1,0 +1,12 @@
+{
+  "name": "RenderEngine",
+  "version": "0.1.0",
+  "description": "Render engine for hexic game",
+  "author": "Ariunbayar Baterdene <ariunbayar.b@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+      "grunt": "latest",
+      "grunt-contrib-watch": "latest",
+      "grunt-contrib-coffee": "latest"
+  }
+}
