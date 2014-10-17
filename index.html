@@ -9,16 +9,98 @@
 <title>Hexic Rendering Engine</title>
 
 <link rel="stylesheet" href="css/main.css" type="text/css" />
-
+<link href='http://fonts.googleapis.com/css?family=Pathway+Gothic+One' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Comfortaa:400,700,300' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Dosis' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Squada+One' rel='stylesheet' type='text/css'>
 </head>
 <body>
 
 <div id="svg"></div>
+<div id="svg1"></div>
+<pre id="p1"></pre>
+<pre id="p2"></pre>
+<pre id="srv"></pre>
+
 <script src="js/d3.js"></script>
 <script src="js/underscore-min.js"></script>
 <script src="js/backbone-min.js"></script>
 <script src="js/compiled/RenderEngine.js"></script>
 <script src="js/compiled/main.js"></script>
+<script src="js/jquery-2.0.3.min.js"></script>
+
+<script type="text/javascript" charset="utf-8">
+fonts = ['Comfortaa', 'Pathway Gothic One', 'Squada One', 'Dosis'];
+font_iter = 0;
+window.change_font = function(){
+    font_iter = (font_iter + 1) % fonts.length
+        d3.selectAll('text').attr('font-family', fonts[font_iter]);
+    console.log('Font changed to: ' + fonts[font_iter]);
+};
+var P = function(_, incr_by, interval, latency, id){
+    var me = this;
+    me._ = _;
+    me.incr_by = incr_by;
+    me.interval = interval;
+    me.latency = latency;
+    me.id = id;
+    me.compare_P = null;
+
+    me.start = function(){
+        //me.req(me.incr);
+        var f = function(){me.incr(f)}; f();
+    }
+
+    me.req = function(cb){
+        $.get('/test.php', function(rsp, a, req){
+            me._ = parseInt(rsp);
+            if (cb) {var f = function(){cb(f)}; f();}
+        });
+    }
+
+    me.incr = function(cb){
+        setTimeout(function(){
+            me._ += me.incr_by;
+            $('#'+me.id).html(me.compare_P ? me.get_compared() : me._);
+            setTimeout(cb, me.interval);
+        }, me.latency);
+    }
+
+    me.move = function(cb){
+        setTimeout(function(){
+            srv_notify_move(me.id);
+            if (cb) cb();  // TODO usage ?
+        }, ~~(Math.random() * 100) + 20);
+    }
+
+    me.rcv_srv_data = function(msg, srv_value){
+        diff = me._ - srv_value;
+        console.log(msg, diff);
+        me._ = srv_value;
+    }
+
+    me.get_compared = function(){
+        return me._ - me.compare_P._;
+    }
+}
+
+window.p1  = new P(0, 1, 16.66, 10, 'p1');
+window.p2  = new P(0, 1, 16.66, 13, 'p2');
+window.srv = new P(0, 1, 16.66, 11, 'srv');
+
+window.p2.compare_P = window.p1.compare_P = window.srv;  // XXX debug only
+
+//window.p1.start();
+//window.p2.start();
+//window.srv.start();
+
+var srv_notify_move = function(p_id){
+    // TODO
+    srv_value = window.srv._;
+    p1.rcv_srv_data('move by ' + p_id, srv_value);
+    p2.rcv_srv_data('move by ' + p_id, srv_value);
+}
+</script>
 
 </body>
 </html>

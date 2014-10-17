@@ -7,46 +7,64 @@ board_users = [
   [0, 0, 0, 0, 0, 2]
 ]
 board_powers = [
-  [50, 10, 10, 10, 10, 10]
-  [10, 10, 10, 10, 10, 10]
-  [10, 10, 10, 10, 10, 10]
-  [10, 10, 10, 10, 10, 10]
-  [10, 10, 10, 10, 10, 10]
-  [10, 10, 10, 10, 10, 50]
+  [  50,  10,  10,9999,  10,  10]
+  [  10,  10,  10,9999,  10,  10]
+  [  10,  10,9999,  10,  10,  10]
+  [  10,  10,  10,9999,  10,  10]
+  [  10,  10,9999,  10,  10,  10]
+  [  10,  10,9999,  10,  10,  50]
+]
+board_powers = [
+  [  50,  10,  10,  10,  10,  10]
+  [  10,  10,  10,  10,  10,  10]
+  [  10,  10,  10,  10,  10,  10]
+  [  10,  10,  10,  10,  10,  10]
+  [  10,  10,  10,  10,  10,  10]
+  [  10,  10,  10,  10,  10,  50]
 ]
 board_moves = [
-  [5, 5, 4, 4]
 ]
 window.board_moves = board_moves
-user_id = 2
-window.game = new Engine('#svg', 350, 300, user_id)
+
+window.game = new Engine('#svg', 350, 300, 1)
 game.updateBoard(board_users, board_powers, board_moves)
-interval = 2000
-timer = setInterval('ticker()', interval)
+window.game1 = new Engine('#svg1', 350, 300, 2)
+game1.updateBoard(board_users, board_powers, board_moves)
+
+interval = 50
+#[incr_at, incr_by, cur_iter] = [40, 1, 0]
+[incr_at, incr_by, cur_iter] = [20, 1, 0]
+
 window.ticker = ->
-  increment_cells(board_powers)
-  run_ai(1, board_users, board_powers, board_moves)
-  run_ai(2, board_users, board_powers, board_moves)
+  if (cur_iter = ++cur_iter % incr_at) == 0
+    increment_cells(board_powers, board_users)
+    run_ai(1, board_users, board_powers, board_moves)
+    #run_ai(2, board_users, board_powers, board_moves)
   process_attacks(board_users, board_powers, board_moves)
   game.updateBoard(board_users, board_powers, board_moves)
+  game1.updateBoard(board_users, board_powers, board_moves)
+
 window.pause = ->
   clearInterval(timer)
-window.resume = ->
-  timer = setInterval('ticker()', interval)
+window.resume = -> timer = setInterval('ticker()', interval)
+window.resume()
 
-increment_cells = (powers) ->
+increment_cells = (powers, users) ->
   for y of powers
     for x of powers[y]
-      powers[y][x] += 1
+      continue if users[y][x] == 0
+      powers[y][x] += incr_by
 
 process_attacks = (users, powers, moves) ->
-  n = 10
+  move_size = (n)-> ~~(n/10) + 1
+  throttle = 1
   for [fx, fy, tx, ty], i in moves
     fuser  = users[fy][fx]
     fpower = powers[fy][fx]
     tuser  = users[ty][tx]
     tpower = powers[ty][tx]
-    continue unless fpower > n
+    continue unless fpower > throttle
+    n = move_size(fpower - throttle)
     if fuser != tuser
       if tpower < n and fpower > tpower
         fpower = fpower - n
@@ -63,6 +81,14 @@ process_attacks = (users, powers, moves) ->
     users[ty][tx] = tuser
     powers[ty][tx] = tpower
 
+game.move = game1.move = (fx, fy, tx, ty)->
+  for [_fx, _fy, _tx, _ty], i in board_moves
+    if fx == _fx and fy == _fy
+      board_moves[i] = [fx, fy, tx, ty]
+      return
+  board_moves.push([fx, fy, tx, ty])
+
+
 run_ai = (user_id, users, powers, moves) ->
   has_cell_at = (x, y) ->
     if y of users
@@ -72,16 +98,23 @@ run_ai = (user_id, users, powers, moves) ->
     shift = if y % 2 then 0 else 1
     attackable = false
     mark_if_attackable = (_y, _x) ->  # !!! reversed x, y
+      return if attackable
       if has_cell_at(_x, _y)
-        if users[_y][_x] != user_id
+        if users[_y][_x] != user_id or powers[_y][_x] < powers[y][x]
           attackable = [_x, _y]
-    mark_if_attackable(y-1, x-1+shift)
-    mark_if_attackable(y-1, x+shift)
-    mark_if_attackable(y  , x+1)
-    mark_if_attackable(y+1, x+shift)
-    mark_if_attackable(y+1, x-1+shift)
-    mark_if_attackable(y  , x-1)
+    adjacents = [
+      [y-1, x-1+shift]
+      [y-1, x+shift]
+      [y  , x+1]
+      [y+1, x+shift]
+      [y+1, x-1+shift]
+      [y  , x-1]
+    ]
+    for [_y, _x] in adjacents
+      mark_if_attackable(_y, _x)
+    #mark_if_attackable.apply(null, adjacents[~~(Math.random() * 5)])
     return attackable
+
   append_move = (fx, fy, tx, ty) ->
     for [_fx, _fy, _tx, _ty], i in moves
       if fx == _fx and fy == _fy
