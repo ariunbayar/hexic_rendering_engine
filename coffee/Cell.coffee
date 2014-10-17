@@ -31,6 +31,7 @@ Cell = Backbone.Model.extend
 
   dragover: ->
     # {{{
+    console.count('dragover')
     points = []
     appeared_els = []
     track_points = (move_dest)->

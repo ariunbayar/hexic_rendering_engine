@@ -15,10 +15,16 @@ Graphics =
         func.call(context)
 
   createSVG: (container_selector, width, height) ->
+    # create svg and their layers
     svg = d3.select(container_selector).append('svg')
       .attr('width', width)
       .attr('height', height)
       .attr('style', '-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -o-user-select: none; user-select: none;')
+    svg.append('g').attr('id', 'layer1')
+    svg.append('g').attr('id', 'layer2')
+    svg.append('g').attr('id', 'layer0')
+
+    # touch/mouse detection with disabling distractive events
     svg.on('touchstart', ->
       svg.on('mousemove', null)
       svg.on('touchstart', null)
@@ -35,8 +41,7 @@ Graphics =
     window.addEventListener('blur', -> self.rollbackActions.call(self))
     window.addEventListener('mouseup', -> self.rollbackActions.call(self))
     window.addEventListener('touchmove', (e)-> e.preventDefault())
-    svg.append('g').attr('id', 'layer1')
-    svg.append('g').attr('id', 'layer2')
+
     return svg
 
   Cell: Backbone.Model.extend({
@@ -44,12 +49,13 @@ Graphics =
       # required attrs: svg, color, coord
       @initCoord()
       @initContainer()
-      @initCircle()
-      @initArc()
+      @initCircle()  # TODO remove
+      @initArc()  # TODO remove
       @initHexagon()
+      @initOverlay()
       @initArrow()
       @initText()
-      @initTmpArrow()
+      @initTmpArrow()  # TODO move to global
       @on('change:power', @changedPower, @)
       @on('change:color', @changedColor, @)
       @on('change:direction', @changedDirection, @)
@@ -64,12 +70,32 @@ Graphics =
       coord.y = coord.y * offset_y + Graphics.board_offset.y
       @set('coord', coord)
 
+    initOverlay: ->
+      # Catchall element for any user interactions
+      container = @get('svg').select('#layer0')
+      coord = @get('coord')
+
+      overlay = container.append('svg:path')
+        .attr('d', 'M -4,-26.57 -21,-16.77 C -23.41,-15.37 -24.99,-12.63 -25,-9.84 L -25,9.79 C -24.99,12.57 -23.41,15.31 -21,16.71 L -4,26.54 C -1.58,27.91 1.58,27.91 4,26.54 L 21,16.7 C 23.41,15.31 25,12.58 25,9.79 L 25,-9.85 C 25,-12.64 23.42,-15.37 21,-16.77 L 4,-26.57 C 1.39,-27.93 -1.62,-27.92 -4,-26.57 z')
+        .attr('opacity', 0)
+        .attr('transform', "translate(#{coord.x},#{coord.y}) scale(1.03, 1.04)")
+
+      self = @
+      overlay.on('mousedown',  -> self.mouseDown.call(self))
+      overlay.on('mouseup',    -> self.mouseUp.call(self))
+      overlay.on('mouseover',  -> self.mouseOver.call(self))
+      overlay.on('mouseout',   -> self.mouseOut.call(self))
+      overlay.on('touchstart', -> self.touchStart.call(self))
+      overlay.on('touchmove',  -> self.touchMove.call(self))
+      overlay.on('touchend',   -> self.touchEnd.call(self))
+
     initContainer: ->
       container = @get('svg').select('#layer1').append('g')
       coord = @get('coord')
       container.attr('transform', "translate(#{coord.x}, #{coord.y})")
       @set('container', container)
 
+    # TODO remove
     initCircle: ->
       [radius, angle] = @_getRadiusAndAngle()
       container = @get('container')
@@ -80,6 +106,7 @@ Graphics =
         .attr('fill', color)
       @set('circle', circle)
 
+    # TODO remove
     initArc: ->
       [radius, angle] = @_getRadiusAndAngle()
       container = @get('container')
@@ -116,59 +143,22 @@ Graphics =
       #@get('text').attr('visibility', 'hidden')
 
       #@get('arc').attr('opacity', 1)
-      @get('arc').attr('visibility', 'hidden')
-      @get('circle').attr('visibility', 'hidden')
-
-      self = @
-      text.on('mousedown',  -> self.mouseDown.call(self))
-      text.on('mouseup',    -> self.mouseUp.call(self))
-      text.on('mouseover',  -> self.mouseOver.call(self))
-      text.on('mouseout',   -> self.mouseOut.call(self))
-      text.on('touchstart', -> self.touchStart.call(self))
-      text.on('touchmove',  -> self.touchMove.call(self))
-      text.on('touchend',   -> self.touchEnd.call(self))
+      @get('arc').attr('visibility', 'hidden')  # TODO remove
+      @get('circle').attr('visibility', 'hidden')  # TODO remove
 
     initHexagon: ->
       container = @get('container')
       color = @get('color')
 
-      points = ""
-      angle = Math.PI / 3
-      for i in [0...6]
-        currX = Math.cos(i * angle + angle/2) * 18
-        currY = Math.sin(i * angle + angle/2) * 18
-        points += (i and "," or "") + currX + "," + currY
-
-      hexagon = container.append("svg:polygon")
+      hexagon = container.append('svg:path')
+        .attr('d', 'M -4,-26.57 -21,-16.77 C -23.41,-15.37 -24.99,-12.63 -25,-9.84 L -25,9.79 C -24.99,12.57 -23.41,15.31 -21,16.71 L -4,26.54 C -1.58,27.91 1.58,27.91 4,26.54 L 21,16.7 C 23.41,15.31 25,12.58 25,9.79 L 25,-9.85 C 25,-12.64 23.42,-15.37 21,-16.77 L 4,-26.57 C 1.39,-27.93 -1.62,-27.92 -4,-26.57 z')
         .attr('fill', color)
-        .attr('stroke', color)
-        .attr('stroke-width', 18)
         .attr('opacity', .6)
-        #.attr('opacity', 1)
-        .attr('points', points)
-        .style('stroke-linejoin', 'round')
       @set('hexagon', hexagon)
-
-      self = @
-      hexagon.on('mousedown',  -> self.mouseDown.call(self))
-      hexagon.on('mouseup',    -> self.mouseUp.call(self))
-      hexagon.on('mouseover',  -> self.mouseOver.call(self))
-      hexagon.on('mouseout',   -> self.mouseOut.call(self))
-      hexagon.on('touchstart', -> self.touchStart.call(self))
-      hexagon.on('touchmove',  -> self.touchMove.call(self))
-      hexagon.on('touchend',   -> self.touchEnd.call(self))
 
     initArrow: ->
       container = @get('svg').select('#layer2').append('g')
       color = @get('color')
-
-      #arrow = container.append("svg:polygon")
-        #.attr('stroke', color)
-        #.attr('stroke-width', 5)
-        #.attr("points", "0,-5 5,0 -5,0 0,-5")
-        ##.attr("points", "0,8 5,13 0,13 -5,13 0,8")
-        #.attr('stroke-linejoin', 'round')
-        #.attr('visibility', 'hidden')
       arrow = container.append('svg:path')
         .attr('fill', color)
         .attr('d', "m 0,-6.31 a 1.31,1.31 0 0 0 -0.90,0.38 l -3.69,3.69 a 1.31,1.31 0 0 0 0.92,2.22 l 7.39,0 a 1.31,1.31 0 0 0 0.92,-2.21 l -3.69,-3.69 a 1.31,1.31 0 0 0 -0.94,-0.38 z")
@@ -176,15 +166,6 @@ Graphics =
       @set('arrow', arrow)
       if @get('direction')
         @changedDirection()
-
-      self = @
-      arrow.on('mousedown',  -> self.mouseDown.call(self))
-      arrow.on('mouseup',    -> self.mouseUp.call(self))
-      arrow.on('mouseover',  -> self.mouseOver.call(self))
-      arrow.on('mouseout',   -> self.mouseOut.call(self))
-      arrow.on('touchstart', -> self.touchStart.call(self))
-      arrow.on('touchmove',  -> self.touchMove.call(self))
-      arrow.on('touchend',   -> self.touchEnd.call(self))
 
     initTmpArrow: ->
       svg = @get('svg')
@@ -197,6 +178,7 @@ Graphics =
         .attr('visibility', 'hidden')
       svg.tmp_arrow = arrow
 
+    # TODO remove
     _powerToRadiusAndAngle: (power) ->
       angle = 0
       p = power
@@ -213,6 +195,7 @@ Graphics =
           break
       return [radius, angle]
 
+    # TODO remove
     _getRadiusAndAngle: ->
       power = @get('power')
       fn = @_powerToRadiusAndAngle
@@ -229,6 +212,7 @@ Graphics =
       )
 
     changedPower: ->
+      # TODO {{{ remove
       [radius, angle] = @_getRadiusAndAngle()
       d = d3.svg.arc()
         .startAngle(0)
@@ -237,23 +221,24 @@ Graphics =
         .endAngle(angle)
       @get('arc').attr('d', d)
       @get('circle').attr('r', radius)
+      # }}}
 
       power = @get('power')
-
       #@get('hexagon').attr('opacity', (Math.min(power / 100, .5) + .5))
-
       formatted_power = if power > 1000 then ~~(power / 100) / 10 + 'k' else power
       @get('text').text(formatted_power)
 
     changedColor: ->
       color = @get('color')
+      # TODO {{{ remove
       @get('circle')
         .attr('fill', color)
       @get('arc')
         .attr('stroke', color)
         .attr('fill', color)
+      # }}}
+
       @get('hexagon')
-        .attr('stroke', color)
         .attr('fill', color)
       @get('arrow')
         #.attr('fill', color)
@@ -366,7 +351,8 @@ Graphics =
 
     animateHoverIn: ->
       unless Graphics.animate
-        @get('hexagon').attr('stroke-width', 24)
+        #@get('hexagon').attr('stroke-width', 24)
+        @get('hexagon').attr('transform', 'scale(1.08, 1.08)')
         return
       @get('hexagon')
         .transition()
@@ -375,7 +361,8 @@ Graphics =
 
     animateHoverOut: ->
       unless Graphics.animate
-        @get('hexagon').attr('stroke-width', 18)
+        #@get('hexagon').attr('stroke-width', 18)
+        @get('hexagon').attr('transform', 'scale(1, 1)')
         return
       @get('hexagon')
         .transition()
