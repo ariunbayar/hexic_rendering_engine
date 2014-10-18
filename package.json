@@ -5,9 +5,10 @@
   "author": "Ariunbayar Baterdene <ariunbayar.b@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-      "grunt": "latest",
-      "grunt-contrib-watch": "latest",
-      "grunt-contrib-coffee": "latest",
-      "grunt-contrib-connect": "latest"
+    "grunt": "latest",
+    "grunt-contrib-watch": "latest",
+    "grunt-contrib-coffee": "latest",
+    "grunt-contrib-connect": "latest"
+    "jshint": "^2.5.6"
   }
 }
