@@ -15,6 +15,7 @@ class RenderEngine
     # board_moves  : [[<from_x>, <from_y>, <to_x>, <to_y>], ...]
     # TODO optimize directions
     directions = {}
+
     for y of board_users
       @board[y] = [] if not (y of @board)
       for x of board_users[y]

@@ -1,35 +1,25 @@
-board_users = [
-  [1, 0, 0, 0, 0, 0]
-  [0, 0, 0, 0, 0, 0]
-  [0, 0, 0, 0, 0, 0]
-  [0, 0, 0, 0, 0, 0]
-  [0, 0, 0, 0, 0, 0]
-  [0, 0, 0, 0, 0, 2]
-]
-board_powers = [
-  [  50,  10,  10,9999,  10,  10]
-  [  10,  10,  10,9999,  10,  10]
-  [  10,  10,9999,  10,  10,  10]
-  [  10,  10,  10,9999,  10,  10]
-  [  10,  10,9999,  10,  10,  10]
-  [  10,  10,9999,  10,  10,  50]
-]
-board_powers = [
-  [  50,  10,  10,  10,  10,  10]
-  [  10,  10,  10,  10,  10,  10]
-  [  10,  10,  10,  10,  10,  10]
-  [  10,  10,  10,  10,  10,  10]
-  [  10,  10,  10,  10,  10,  10]
-  [  10,  10,  10,  10,  10,  50]
-]
-board_moves = [
-]
+boardData = _initBoard(6, 2)
+game_engine = new GameEngine({}, {containerId:'#svg1', boardData: boardData})
+window.game_engine = game_engine  # XXX debug only
+
+
+
+
+size = 6
+board_users  = (0  for x in [1..size] for i in [1..size])
+board_powers = (10 for x in [1..size] for i in [1..size])
+board_moves = []
+
+set_player_location = (x, y, id, power)->
+  board_users[y][x] = id
+  board_powers[y][x] = power
+set_player_location(0, 0, 1, 50)
+set_player_location(size-1, size-1, 2, 50)
+
 window.board_moves = board_moves
 
-window.game = new Engine('#svg', 350, 300, 1)
+window.game = new Engine('#svg', size*80, size*50, 2)
 game.updateBoard(board_users, board_powers, board_moves)
-window.game1 = new Engine('#svg1', 350, 300, 2)
-game1.updateBoard(board_users, board_powers, board_moves)
 
 interval = 50
 #[incr_at, incr_by, cur_iter] = [40, 1, 0]
@@ -38,15 +28,16 @@ interval = 50
 window.ticker = ->
   if (cur_iter = ++cur_iter % incr_at) == 0
     increment_cells(board_powers, board_users)
+  if Math.random() > .98
     run_ai(1, board_users, board_powers, board_moves)
+  #if Math.random() > .98
     #run_ai(2, board_users, board_powers, board_moves)
   process_attacks(board_users, board_powers, board_moves)
   game.updateBoard(board_users, board_powers, board_moves)
-  game1.updateBoard(board_users, board_powers, board_moves)
 
 window.pause = ->
   clearInterval(timer)
-window.resume = -> timer = setInterval('ticker()', interval)
+window.resume = -> window.timer = setInterval('ticker()', interval)
 window.resume()
 
 increment_cells = (powers, users) ->
@@ -81,7 +72,7 @@ process_attacks = (users, powers, moves) ->
     users[ty][tx] = tuser
     powers[ty][tx] = tpower
 
-game.move = game1.move = (fx, fy, tx, ty)->
+game.move = (fx, fy, tx, ty)->
   for [_fx, _fy, _tx, _ty], i in board_moves
     if fx == _fx and fy == _fy
       board_moves[i] = [fx, fy, tx, ty]
@@ -124,6 +115,7 @@ run_ai = (user_id, users, powers, moves) ->
 
   for y of users
     for x of users[y]
+      continue if Math.random() < window.limit
       continue if users[y][x] != user_id
       y = parseInt(y)
       x = parseInt(x)

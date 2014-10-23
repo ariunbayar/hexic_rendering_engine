@@ -21,8 +21,11 @@ module.exports = (grunt) ->
           livereload: true
         files: ['index.html', 'css/*', 'js/*.js', 'js/compiled/*']
       coffee:
-        files: 'coffee/*.coffee'
         tasks: 'coffee:compile'
+        files: 'coffee/*.coffee'
+      jshint:
+        tasks: 'jshint'
+        files: 'js/*.js'
 
     connect:
       options:
@@ -32,9 +35,15 @@ module.exports = (grunt) ->
           livereload: true
           base: ["."]
 
+    jshint:
+      files: ['js/*.js']
+      options:
+        jshintrc: '.jshintrc'
+
   grunt.registerTask("default",
     ['connect', 'watch'])
 
   grunt.loadNpmTasks("grunt-contrib-watch")
   grunt.loadNpmTasks("grunt-contrib-coffee")
   grunt.loadNpmTasks("grunt-contrib-connect")
+  grunt.loadNpmTasks('grunt-contrib-jshint')

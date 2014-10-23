@@ -6,9 +6,11 @@
   "license": "ISC",
   "devDependencies": {
     "grunt": "latest",
-    "grunt-contrib-watch": "latest",
     "grunt-contrib-coffee": "latest",
-    "grunt-contrib-connect": "latest"
+    "grunt-contrib-connect": "latest",
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-contrib-watch": "latest",
+    "jsdoc": "^3.3.0-alpha9",
     "jshint": "^2.5.6"
   }
 }

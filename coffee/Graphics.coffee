@@ -78,7 +78,7 @@ Graphics =
       overlay = container.append('svg:path')
         .attr('d', 'M -4,-26.57 -21,-16.77 C -23.41,-15.37 -24.99,-12.63 -25,-9.84 L -25,9.79 C -24.99,12.57 -23.41,15.31 -21,16.71 L -4,26.54 C -1.58,27.91 1.58,27.91 4,26.54 L 21,16.7 C 23.41,15.31 25,12.58 25,9.79 L 25,-9.85 C 25,-12.64 23.42,-15.37 21,-16.77 L 4,-26.57 C 1.39,-27.93 -1.62,-27.92 -4,-26.57 z')
         .attr('opacity', 0)
-        .attr('transform', "translate(#{coord.x},#{coord.y}) scale(1.03, 1.04)")
+        .attr('transform', "translate(#{coord.x},#{coord.y}) scale(1.04, 1.04)")
 
       self = @
       overlay.on('mousedown',  -> self.mouseDown.call(self))
@@ -128,12 +128,11 @@ Graphics =
 
     initText: ->
       container = @get('container')
-      color = @get('color')
       text = container.append('text')
         .attr("x", 0)
         .attr("y", 0)
         .attr("text-anchor", 'middle')
-        .attr("alignment-baseline", 'central')
+        .attr("alignment-baseline", 'central')  # XXX problem with firefox
         .attr("font-family", "Pathway Gothic One, sans-serif")
         .attr("font-size", ".8em")
         .attr("font-weight", 400)
@@ -157,7 +156,7 @@ Graphics =
       @set('hexagon', hexagon)
 
     initArrow: ->
-      container = @get('svg').select('#layer2').append('g')
+      container = @get('svg').select('#layer2')
       color = @get('color')
       arrow = container.append('svg:path')
         .attr('fill', color)
@@ -224,9 +223,14 @@ Graphics =
       # }}}
 
       power = @get('power')
-      #@get('hexagon').attr('opacity', (Math.min(power / 100, .5) + .5))
-      formatted_power = if power > 1000 then ~~(power / 100) / 10 + 'k' else power
+      lowest_opacity = .2
+      highest_power = 50
+      opacity = Math.min(power / highest_power * (1 - lowest_opacity), (1 - lowest_opacity)) + lowest_opacity
+      @get('hexagon').attr('opacity', opacity)
+      formatted_power = if power > 1000 then ~~(power / 100) / 10 + 'K' else power
+      #formatted_power = '\u2660' + formatted_power if power > 200
       @get('text').text(formatted_power)
+      @get('arrow').attr('fill', @_blendColors(@get('color'), 1 - opacity, '#fdf6e3'))
 
     changedColor: ->
       color = @get('color')
