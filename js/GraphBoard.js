@@ -11,17 +11,18 @@ var GraphBoard = Backbone.Model.extend(
         var sin60 = Math.sin(Math.PI / 3);
         var cellRadius = 30;
         return {
-            svg: null,  // TODO how long do we need to hold this object
-            touchDetected: false,
-            mouseDetected: false,
+            // mostly static properties. Set at init time
             boardOffset: {
                 x: 2 * cellRadius * sin60,
                 y: 2 * cellRadius * sin60 * sin60,
                 r: cellRadius
             },
-            colors: null,
+            boardData: null,
             cells: [],
-            rollbackQueue: []
+
+            // dynamic or at least part of it
+            tmpArrow: null,
+            dragSrc: null
         };
     },
 
@@ -35,25 +36,28 @@ var GraphBoard = Backbone.Model.extend(
      *      boardData.board - The board itself<br>
      *      boardData.width - Maximum row size<br>
      *      boardData.height - Number of row the board spans<br>
-     *      boardData.userId - Current user id as in boardData.board  TODO
+     *      boardData.userId - Current user id as in boardData.board
      *      boardData.colors - Available colors for the board<br>
      *          0..N - Colors for users. Includes neutral user
      *          background - Background color for this board
      */
     initialize: function(attributes, options){
         var layerNames= ['layer3', 'layer2', 'layer1'];
-        var boardData = options.boardData;
-        this.set('colors', boardData.colors);
+
+        this.set('boardData', options.boardData);
+        GraphCell.boardData = options.boardData;
 
         var layers = this._initSVG(
             options.containerId,
-            boardData.width,
-            boardData.height,
+            options.boardData.width,
+            options.boardData.height,
             layerNames
         );
-        this._detectMouseOrTouch();
-        this._handleUnexpectedInteraction();
-        this._initBoard(boardData.board, layers);
+        var frontLayer = layers[layers.length - 1];
+        this._detectMouseOrTouch(frontLayer);
+        this._handleUnexpectedInteraction(frontLayer);
+        this._initTmpArrow(frontLayer);
+        this._initBoard(options.boardData.board, layers);
 
         this.set('logger', new Logger(options.containerId));
     },
@@ -61,10 +65,9 @@ var GraphBoard = Backbone.Model.extend(
     /**
      * Draws basic svg with their layers
      * @param {string} containerId  Container where SVG will be added. As in CSS selector
-     * @param {Object} boardData
-     * @param {int} boardData.width - Maximum row size
-     * @param {int} boardData.height - Number of row the board spans
-     * @param {Array} layers Array of layer names to be used as id
+     * @param {int} width - Maximum row size
+     * @param {int} height - Number of row the board spans
+     * @param {Array} layerNames Array of layer names to be used as id
      */
     _initSVG: function(containerId, width, height, layerNames){
         var boardOffset = this.get('boardOffset');
@@ -80,27 +83,25 @@ var GraphBoard = Backbone.Model.extend(
             layers.push(svg.append('g').attr('id', layerNames[i]));
         }
 
-        this.set('svg', svg);
-
         return layers;
     },
 
     /**
-     * Binds events to detect mouse or touch event to further set it to
-     * touchDetected, mouseDetected properties
+     * Binds events to detect mouse or touch event to
+     * further set it to {@link GraphCell} properties
      */
-    _detectMouseOrTouch: function(){
-        var svg = this.get('svg');
+    _detectMouseOrTouch: function(frontLayer){
         var self = this;
 
-        svg.on('touchstart', function(){
-            svg.on('mousemove', null);
-            svg.on('touchstart', null);
-            self.set('touchDetected', true);
+        var el = d3.select(window);
+        el.on('touchstart', function(){
+            el.on('mousemove', null);
+            el.on('touchstart', null);
+            GraphCell.touchDetected = true;
         }).on('mousemove', function(){
-            svg.on('mousemove', null);
-            svg.on('touchstart', null);
-            self.set('mouseDetected', true);
+            el.on('mousemove', null);
+            el.on('touchstart', null);
+            GraphCell.mouseDetected = true;
         });
     },
 
@@ -108,29 +109,46 @@ var GraphBoard = Backbone.Model.extend(
      * There are cases when user is in progress of doing something.
      * Ex. dragging from one cell to another. It helps to avoid those mistakes.
      */
-    _handleUnexpectedInteraction: function(){
-        var self = this;
-        this.get('svg').on('contextmenu', function(){ d3.event.preventDefault(); });
-        window.addEventListener('blur', function(){ self.rollbackActions.call(self); });
-        window.addEventListener('mouseup', function(){ self.rollbackActions.call(self); });
-        window.addEventListener('touchmove', function(e){ e.preventDefault(); });
+    _handleUnexpectedInteraction: function(frontLayer){
+        frontLayer.on('contextmenu',
+            function(){ d3.event.preventDefault(); });
+        window.addEventListener('blur',
+            function(){ GraphCell.rollbackActions.call(GraphCell); });
+        window.addEventListener('mouseup',
+            function(){ GraphCell.rollbackActions.call(GraphCell); });
+        window.addEventListener('touchmove',
+            function(e){ e.preventDefault(); });
     },
 
     /**
-     * Draws initial board data having each cell as a neutral cell
+     * TODO
+     */
+    _initTmpArrow: function(frontLayer){
+        var arrow = frontLayer.append('svg:polygon')
+          .attr('stroke', '#ff0000')
+          .attr('stroke-width', 5)
+          .attr('points', Constants.tmpArrow)
+          .attr('visibility', 'hidden')
+          .attr('stroke-linejoin', 'round');
+        this.set('tmpArrow', arrow);
+    },
+
+    /**
+     * Draws initial board data
+     * Injects drag methods to get feedback
      */
     _initBoard: function (board, layers){
-        var colors = this.get('colors');
         var cells = this.get('cells');
 
-        // TODO think of multiple instances of GraphBoard are running
-        // who has different background colors
-        GraphCell.background = colors.background;
+        GraphCell.dragStart = _.bind(this._dragStart, this);
+        GraphCell.dragOver  = _.bind(this._dragOver,this);
+        GraphCell.dragOut   = this._dragOut;
+        GraphCell.dragStop  = this._dragStop;
 
         Helpers.iterBoard(board, function(cell, row, col){
             if (_.isUndefined(cells[row])) { cells[row] = []; }
             cells[row][col] = new GraphCell(
-                {color: colors[cell.user],
+                {userId: cell.user,
                  row: row,
                  col: col,
                  power: cell.count},
@@ -146,11 +164,10 @@ var GraphBoard = Backbone.Model.extend(
      * @param {Array} board Updated board data to render
      */
     render: function(board){
-        var colors = this.get('colors');
         var cells = this.get('cells');
 
         Helpers.iterBoard(board, function(cell, row, col){
-            cells[row][col].updateIfChanged(colors[cell.user], cell.count);
+            cells[row][col].updateIfChanged(cell.user, cell.count);
         }, this);
     },
 
@@ -164,29 +181,53 @@ var GraphBoard = Backbone.Model.extend(
     },
 
     /**
-     * Helps to avoid mis-drawings on the board. Basically meaning to cleanup.
-     * There are cases when user is in progress of doing something.
-     * Ex. dragging from one cell to another.
+     * TODO
      */
-    rollbackActions: function(){
-        // TODO make this method private
-        var item;
-        var queue = this.get('rollbackQueue');
+    _dragStart: function(cell, row, col){
+        //if (cells[row][col])  ???
+        this.set('dragSrc', cell);
 
-        // TODO improve rollback design
-        while (true) {
-            item = queue.shift();
-            if (_.isUndefined(item)) {
-                break;
-            }
+        GraphCell.rollbackQueue.push([function(){
+            this.set('dragSrc', null);
+        }, this]);
+    },
 
-            // XXX item: [func, context, args]
-            if (item[2]) {
-                item[0].apply(item[1], item[2]);
-            } else {
-                item[0].call(item[1]);
-            }
+    /**
+     * TODO
+     */
+    _dragOver: function(cell){
+        console.log('dragover');
+        // when mouse is up only hovering
+        cell.animateHoverIn();
+        GraphCell.rollbackQueue.push([function(){
+            cell.animateHoverOut();
+        }, this]);
+
+        // when mouse is down and dragging
+        var srcCell = this.get('dragSrc');
+        if (srcCell) {
+            // TODO
+            //[direction, drag_src] = drag_src_info
+            //drag_src.get('el').tmpArrowTo(direction)
         }
+    },
+
+    /**
+     * TODO
+     */
+    _dragOut: function(cell){
+        console.log('dragout');
+        GraphCell.rollbackActions();
+        // TODO needs binding context?
+        // TODO
+    },
+
+    /**
+     * TODO
+     */
+    _dragStop: function(cell){
+        // TODO needs binding context?
+        // TODO
     }
 
 });

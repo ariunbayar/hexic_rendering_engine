@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-/* globals Backbone */
+/* globals Backbone, _, d3 */
 /* globals Constants, Helpers */
 
 
@@ -9,9 +9,9 @@ var GraphCell = Backbone.Model.extend(
 {
     defaults: {
         power: 0,
-        color: 'black',
-        row: 0,  // TODO does it have to be permanent
-        col: 0,  // TODO does it have to be permanent
+        userId: null,
+        row: 0,
+        col: 0,
         coord: {x: 0, y: 0},
         hexagon: null,
         text: null
@@ -21,7 +21,7 @@ var GraphCell = Backbone.Model.extend(
      * @classdesc Represents a cell
      * @augments Backbone.Model
      * @constructs
-     * @param {Object} attributes.color Color for this cell
+     * @param {Object} attributes.userId User for this cell
      * @param {Object} attributes.power Power for the cell
      * @param {int} attributes.row Board row index
      * @param {int} attributes.col Board column index
@@ -39,16 +39,16 @@ var GraphCell = Backbone.Model.extend(
         );
         this._initHexagon(options.layers[0], coord);
         this._initText(options.layers[0], coord);
-        //_initOverlay()
-        //_initArrow()
-        //_initTmpArrow()  # TODO move to global
+        //this._initArrow(options.layers[1]);
+        this._initOverlay(options.layers[2], coord);
+
         this.on('change:power', this._changedPower, this);
-        this.on('change:color', this._changedColor, this);
+        this.on('change:userId', this._changedUserId, this);
         //on('change:direction', @changedDirection, @)
 
-        // XXX apparently they don't update with
-        this.updateIfChanged(attributes.color, attributes.power);
-        this.trigger('change:color', this, attributes.color);
+        // trigger manually to update the changes as they are already changed
+        this.updateIfChanged(attributes.userId, attributes.power);
+        this.trigger('change:userId', this, attributes.userId);
         this.trigger('change:power', this, attributes.power);
     },
 
@@ -99,11 +99,11 @@ var GraphCell = Backbone.Model.extend(
     },
 
     /**
-     * Triggers power and color change only when they needs to update
-     * @param {string} color Color to be updated
+     * Triggers power and user change only when they needs to update
+     * @param {string} userId User to be updated
      * @param {int} power Power to be updated
      */
-    updateIfChanged: function(color, power){
+    updateIfChanged: function(userId, power){
         var newPower,
             oldPower = this.get('power'),
             powerChanged;
@@ -119,12 +119,12 @@ var GraphCell = Backbone.Model.extend(
             this.set('power', newPower);
         }
 
-        // trigger color change
-        if (this.get('color') !== color){
-            this.set('color', color);
+        // trigger user change
+        if (this.get('userId') !== userId){
+            this.set('userId', userId);
         }
         if (power <= this.constructor.opaquePower && powerChanged){
-            this.trigger('change:color', this, color);
+            this.trigger('change:userId', this, userId);
         }
     },
 
@@ -138,11 +138,11 @@ var GraphCell = Backbone.Model.extend(
     },
 
     /**
-     * Redraw hexagon and arrow when color is changed
+     * Redraw hexagon and arrow when user is changed
      * @param {GraphCell} model The current instance
-     * @param {string} _color Color to be changed to
+     * @param {string} userId User to be changed to
      */
-    _changedColor: function(model, _color){
+    _changedUserId: function(model, userId){
         var color, opacity;
 
         opacity =
@@ -150,16 +150,159 @@ var GraphCell = Backbone.Model.extend(
             this.constructor.opaquePower * (1 - this.constructor.minOpacity) +
             this.constructor.minOpacity;
         color = Helpers.blendColors(
-            _color, opacity, this.constructor.background);
+            this.constructor.boardData.colors[userId],
+            opacity,
+            this.constructor.boardData.colors.background
+        );
         this.get('hexagon').attr('fill', color);
         //this.get('arrow').attr('fill', this.BlendColors(this.get('color'), 1 - opacity, '#fdf6e3'))
+    },
+
+    /**
+     * Mouse/Touch event capture element that overlays on all other elements
+     * @param {Object} layer Layer to be drawn which is d3.select() object
+     * @param {Object} coord Current cell coordinate {x: <x>, y: <y>}
+     */
+    _initOverlay: function(layer, coord){
+        var translate, overlay, self = this;
+
+        translate = 'translate(' + coord.x + ',' + coord.y + ')';
+        overlay = layer.append('svg:path')
+            .attr('d', Constants.hexagon)
+            .attr('opacity', 0)
+            .attr('transform', translate + ' scale(1.04, 1.04)');
+
+        // XXX Benchmark referencing self vs _.bind?
+        overlay.on('mousedown', function(){ self._mouseDown.call(self);  });
+        overlay.on('mouseup',   function(){ self._mouseUp.call(self);    });
+        overlay.on('mouseover', function(){ self._mouseOver.call(self);  });
+        overlay.on('mouseout',  function(){ self._mouseOut.call(self);   });
+        overlay.on('touchstart',function(){ self._touchStart.call(self); });
+        overlay.on('touchmove', function(){ self._touchMove.call(self);  });
+        overlay.on('touchend',  function(){ self._touchEnd.call(self);   });
+    },
+
+    /**
+     * TODO
+     */
+    _mouseDown: function(){
+        if (!this.constructor.mouseDetected) { return; }
+
+        this.constructor.rollbackActions();
+        this.constructor.dragStart(this, this.get('row'), this.get('col'));
+        //for direction, cell of @get('neighbours')
+          //cell.set('drag_src', [direction, @])
+        //Graphics.rollback_queue.push([
+          //->
+            //for direction, cell of @get('neighbours')
+              //cell.set('drag_src', null)
+          //, @
+        //])
+    },
+
+    /**
+     * TODO
+     */
+    _mouseUp: function(){
+        if (!this.constructor.mouseDetected) { return; }
+        // TODO
+    },
+
+    /**
+     * TODO
+     */
+    _mouseOver: function(){
+        if (!this.constructor.mouseDetected) { return; }
+
+        this.constructor.dragOver(this);
+    },
+
+    /**
+     * TODO
+     */
+    _mouseOut: function(){
+        if (!this.constructor.mouseDetected) { return; }
+
+        this.constructor.dragOut(this);
+    },
+
+    /**
+     * TODO
+     */
+    _touchStart: function(){
+        if (!this.constructor.touchDetected) { return; }
+        // TODO
+    },
+
+    /**
+     * TODO
+     */
+    _touchMove: function(){
+        if (!this.constructor.touchDetected) { return; }
+        // TODO
+    },
+
+    /**
+     * TODO
+     */
+    _touchEnd: function(){
+        if (!this.constructor.touchDetected) { return; }
+        // TODO
+    },
+
+    animateHoverIn: function(){
+        var hexagon = this.get('hexagon');
+        var t = d3.transform(hexagon.attr('transform'));
+        t.scale = [1.08, 1.08];
+        hexagon.attr('transform', t.toString());
+    },
+
+    animateHoverOut: function(){
+        var hexagon = this.get('hexagon');
+        var t = d3.transform(hexagon.attr('transform'));
+        t.scale = [1, 1];
+        hexagon.attr('transform', t.toString());
     }
 
 },{
-    // class properties
-    background: 'white',
+
+    boardData: null,
+
     opaquePower: 50,
-    minOpacity: 0.2
+    minOpacity: 0.2,
+
+    touchDetected: false,  // @see GraphBoard._detectMouseOrTouch
+    mouseDetected: false,  // @see GraphBoard._detectMouseOrTouch
+
+    dragStart: null, // XXX to be overriden by {@link GraphBoard}
+    dragOver : null, // XXX to be overriden by {@link GraphBoard}
+    dragOut  : null, // XXX to be overriden by {@link GraphBoard}
+    dragStop : null, // XXX to be overriden by {@link GraphBoard}
+
+    rollbackQueue: [],
+    /*
+     * Helps to avoid mis-drawings on the board. Basically meaning to cleanup.
+     * There are cases when user is in progress of doing something.
+     * Ex. dragging from one cell to another. And a popup opens
+     */
+    rollbackActions: function(){
+        var item,
+            numQueue = this.rollbackQueue.length;
+
+        while (numQueue--) {
+            item = this.rollbackQueue.shift();
+            console.log('rollback', item);
+            if (_.isUndefined(item)) { break; }
+
+            // XXX item: [func, context, args]
+            if (item[2]) {
+                item[0].apply(item[1], item[2]);
+            } else {
+                item[0].call(item[1]);
+            }
+        }
+    }
+
 });
 window.GraphCell = GraphCell;
 
