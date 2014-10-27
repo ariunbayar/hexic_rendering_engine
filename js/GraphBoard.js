@@ -125,7 +125,7 @@ var GraphBoard = Backbone.Model.extend(
      */
     _initTmpArrow: function(frontLayer){
         var arrow = frontLayer.append('svg:polygon')
-          .attr('stroke', '#ff0000')
+          .attr('stroke', '#ffff00')
           .attr('stroke-width', 5)
           .attr('points', Constants.tmpArrow)
           .attr('visibility', 'hidden')
@@ -141,9 +141,9 @@ var GraphBoard = Backbone.Model.extend(
         var cells = this.get('cells');
 
         GraphCell.dragStart = _.bind(this._dragStart, this);
-        GraphCell.dragOver  = _.bind(this._dragOver,this);
-        GraphCell.dragOut   = this._dragOut;
-        GraphCell.dragStop  = this._dragStop;
+        GraphCell.dragOver  = _.bind(this._dragOver,  this);
+        GraphCell.dragOut   = _.bind(this._dragOut,   this);
+        GraphCell.dragStop  = _.bind(this._dragStop,  this);
 
         Helpers.iterBoard(board, function(cell, row, col){
             if (_.isUndefined(cells[row])) { cells[row] = []; }
@@ -180,13 +180,22 @@ var GraphBoard = Backbone.Model.extend(
         return this.get('logger');
     },
 
+    _isOwner: function(row, col){
+        var boardData = this.get('boardData');
+        return boardData.board[row][col].user === boardData.userId;
+    },
+
     /**
      * TODO
      */
     _dragStart: function(cell, row, col){
-        //if (cells[row][col])  ???
-        this.set('dragSrc', cell);
+        if (!this._isOwner(row, col)){ return; }
 
+        // TODO why do we need this?
+        //Graphics.rollbackActions()
+
+        this.set('dragSrc', cell);
+        console.log('dragstart');
         GraphCell.rollbackQueue.push([function(){
             this.set('dragSrc', null);
         }, this]);
@@ -195,39 +204,69 @@ var GraphBoard = Backbone.Model.extend(
     /**
      * TODO
      */
-    _dragOver: function(cell){
-        console.log('dragover');
-        // when mouse is up only hovering
+    _dragOver: function(cell, row, col){
+        var srcCell = this.get('dragSrc');
+        if (!this._isOwner(row, col) && !srcCell){ return; }
+
+        // TODO only allow dragging to neighbours
+
+        // when mouse is up and only hovering
         cell.animateHoverIn();
+        console.log('dragover');
         GraphCell.rollbackQueue.push([function(){
             cell.animateHoverOut();
-        }, this]);
+        }, this, null, 'dragover']);
+
 
         // when mouse is down and dragging
-        var srcCell = this.get('dragSrc');
-        if (srcCell) {
-            // TODO
-            //[direction, drag_src] = drag_src_info
-            //drag_src.get('el').tmpArrowTo(direction)
+        if (srcCell && cell.cid !== srcCell.cid) {
+            this._moveTmpArrow(srcCell.get('coord'), cell.get('coord'));
+            GraphCell.rollbackQueue.push([function(){
+                this._moveTmpArrow(null);
+            }, this, null, 'dragover']);
         }
     },
 
     /**
      * TODO
      */
-    _dragOut: function(cell){
+    _dragOut: function(cell, row, col){
+        var srcCell = this.get('dragSrc');
+        if (!this._isOwner(row, col) && !srcCell){ return; }
+
         console.log('dragout');
-        GraphCell.rollbackActions();
-        // TODO needs binding context?
-        // TODO
+        GraphCell.rollbackActions('dragover');
     },
 
     /**
      * TODO
      */
-    _dragStop: function(cell){
-        // TODO needs binding context?
-        // TODO
+    _dragStop: function(cell, row, col){
+        var srcCell = this.get('dragSrc');
+        if (!this._isOwner(row, col) && !srcCell){ return; }
+
+        console.log('dragstop');
+
+        GraphCell.rollbackActions();
+    },
+
+    /**
+     * TODO
+     */
+    _moveTmpArrow: function(coordSrc, coordDest){
+        if (coordSrc === null){
+            this.get('tmpArrow').style('visibility', 'hidden');
+            return;
+        }
+
+        var t = d3.transform(),
+            delta = {y: coordDest.y - coordSrc.y, x: coordDest.x - coordSrc.x};
+        t.translate = [coordSrc.x, coordSrc.y];
+        t.rotate = Math.atan2(delta.y, delta.x) * 180 / Math.PI;
+
+        this.get('tmpArrow')
+            .style('visibility', 'visible')
+            .attr('transform', t.toString());
     }
 
 });

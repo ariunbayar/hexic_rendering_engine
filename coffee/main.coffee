@@ -38,7 +38,7 @@ window.ticker = ->
 window.pause = ->
   clearInterval(timer)
 window.resume = -> window.timer = setInterval('ticker()', interval)
-window.resume()
+#window.resume()
 
 increment_cells = (powers, users) ->
   for y of powers

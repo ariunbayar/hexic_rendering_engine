@@ -12,7 +12,7 @@ var GraphCell = Backbone.Model.extend(
         userId: null,
         row: 0,
         col: 0,
-        coord: {x: 0, y: 0},
+        coord: null,
         hexagon: null,
         text: null
     },
@@ -60,9 +60,10 @@ var GraphCell = Backbone.Model.extend(
      */
     _initCoord: function(row, col, boardOffset){
         var shiftX = (row % 2) ? 0 : (boardOffset.x / 2);
-        var coord = this.get('coord');
+        var coord = {};
         coord.x = col * boardOffset.x + boardOffset.r + shiftX;
         coord.y = row * boardOffset.y + boardOffset.r;
+        this.set('coord', coord);
         return coord;
     },
 
@@ -188,16 +189,7 @@ var GraphCell = Backbone.Model.extend(
     _mouseDown: function(){
         if (!this.constructor.mouseDetected) { return; }
 
-        this.constructor.rollbackActions();
         this.constructor.dragStart(this, this.get('row'), this.get('col'));
-        //for direction, cell of @get('neighbours')
-          //cell.set('drag_src', [direction, @])
-        //Graphics.rollback_queue.push([
-          //->
-            //for direction, cell of @get('neighbours')
-              //cell.set('drag_src', null)
-          //, @
-        //])
     },
 
     /**
@@ -205,7 +197,8 @@ var GraphCell = Backbone.Model.extend(
      */
     _mouseUp: function(){
         if (!this.constructor.mouseDetected) { return; }
-        // TODO
+
+        this.constructor.dragStop(this, this.get('row'), this.get('col'));
     },
 
     /**
@@ -214,7 +207,7 @@ var GraphCell = Backbone.Model.extend(
     _mouseOver: function(){
         if (!this.constructor.mouseDetected) { return; }
 
-        this.constructor.dragOver(this);
+        this.constructor.dragOver(this, this.get('row'), this.get('col'));
     },
 
     /**
@@ -223,7 +216,7 @@ var GraphCell = Backbone.Model.extend(
     _mouseOut: function(){
         if (!this.constructor.mouseDetected) { return; }
 
-        this.constructor.dragOut(this);
+        this.constructor.dragOut(this,  this.get('row'), this.get('col'));
     },
 
     /**
@@ -280,21 +273,24 @@ var GraphCell = Backbone.Model.extend(
     dragStop : null, // XXX to be overriden by {@link GraphBoard}
 
     rollbackQueue: [],
-    /*
+    /**
      * Helps to avoid mis-drawings on the board. Basically meaning to cleanup.
      * There are cases when user is in progress of doing something.
      * Ex. dragging from one cell to another. And a popup opens
+     * @param {string} label Process queues with given label
      */
-    rollbackActions: function(){
+    rollbackActions: function(label){
         var item,
-            numQueue = this.rollbackQueue.length;
+            idx = this.rollbackQueue.length;
 
-        while (numQueue--) {
-            item = this.rollbackQueue.shift();
-            console.log('rollback', item);
-            if (_.isUndefined(item)) { break; }
+        while (idx--) {
+            // XXX notice iterating from last element
+            // XXX item: [func, context, args, label]
+            item = this.rollbackQueue[idx];
+            if (label && item[3] !== label){ continue; }
 
-            // XXX item: [func, context, args]
+            this.rollbackQueue.splice(idx, 1);
+
             if (item[2]) {
                 item[0].apply(item[1], item[2]);
             } else {
