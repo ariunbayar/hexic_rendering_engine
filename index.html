@@ -9,10 +9,6 @@
 <title>Hexic Rendering Engine</title>
 
 <link rel="stylesheet" href="css/main.css" type="text/css" />
-<link href='http://fonts.googleapis.com/css?family=Pathway+Gothic+One' rel='stylesheet' type='text/css'>
-<link href='http://fonts.googleapis.com/css?family=Comfortaa:400,700,300' rel='stylesheet' type='text/css'>
-<link href='http://fonts.googleapis.com/css?family=Dosis' rel='stylesheet' type='text/css'>
-<link href='http://fonts.googleapis.com/css?family=Squada+One' rel='stylesheet' type='text/css'>
 </head>
 <body>
 
@@ -34,16 +30,6 @@
 
 <script src="js/compiled/RenderEngine.js"></script><!-- TODO remove -->
 <script src="js/compiled/main.js"></script><!-- TODO remove -->
-
-<script type="text/javascript" charset="utf-8">
-fonts = ['Comfortaa', 'Pathway Gothic One', 'Squada One', 'Dosis'];
-font_iter = 0;
-window.change_font = function(){
-    font_iter = (font_iter + 1) % fonts.length
-        d3.selectAll('text').attr('font-family', fonts[font_iter]);
-    console.log('Font changed to: ' + fonts[font_iter]);
-};
-</script>
 
 </body>
 </html>
