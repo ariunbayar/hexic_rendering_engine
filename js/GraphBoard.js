@@ -9,13 +9,11 @@ var GraphBoard = Backbone.Model.extend(
 {
     defaults: function(){
         var sin60 = Math.sin(Math.PI / 3);
-        var cellRadius = 30;
         return {
             // mostly static properties. Set at init time
             boardOffset: {
-                x: 2 * cellRadius * sin60,
-                y: 2 * cellRadius * sin60 * sin60,
-                r: cellRadius
+                x: 2 * Constants.cellRadius * sin60,
+                y: 2 * Constants.cellRadius * sin60 * sin60,
             },
             boardData: null,
             cells: [],
@@ -47,17 +45,17 @@ var GraphBoard = Backbone.Model.extend(
         this.set('boardData', options.boardData);
         GraphCell.boardData = options.boardData;
 
-        var layers = this._initSVG(
+        var graphics = this._initSVG(
             options.containerId,
             options.boardData.width,
             options.boardData.height,
             layerNames
         );
-        var frontLayer = layers[layers.length - 1];
+        var frontLayer = graphics.layers[graphics.layers.length - 1];
         this._detectMouseOrTouch(frontLayer);
-        this._handleUnexpectedInteraction(frontLayer);
+        this._handleUnexpectedInteraction(graphics.svg);
         this._initTmpArrow(frontLayer);
-        this._initBoard(options.boardData.board, layers);
+        this._initBoard(options.boardData.board, graphics);
 
         this.set('logger', new Logger(options.containerId));
     },
@@ -68,6 +66,7 @@ var GraphBoard = Backbone.Model.extend(
      * @param {int} width - Maximum row size
      * @param {int} height - Number of row the board spans
      * @param {Array} layerNames Array of layer names to be used as id
+     * @return {Object} SVG element and its layers as an object
      */
     _initSVG: function(containerId, width, height, layerNames){
         var boardOffset = this.get('boardOffset');
@@ -83,12 +82,13 @@ var GraphBoard = Backbone.Model.extend(
             layers.push(svg.append('g').attr('id', layerNames[i]));
         }
 
-        return layers;
+        return {svg: svg, layers: layers};
     },
 
     /**
      * Binds events to detect mouse or touch event to
      * further set it to {@link GraphCell} properties
+     * @param {Object} frontLayer Element to catch events on
      */
     _detectMouseOrTouch: function(frontLayer){
         var self = this;
@@ -97,31 +97,31 @@ var GraphBoard = Backbone.Model.extend(
         el.on('touchstart', function(){
             el.on('mousemove', null);
             el.on('touchstart', null);
-            GraphCell.touchDetected = true;
+            GraphCell.mouseDetected = false;
         }).on('mousemove', function(){
             el.on('mousemove', null);
             el.on('touchstart', null);
-            GraphCell.mouseDetected = true;
+            GraphCell.touchDetected = false;
         });
     },
 
     /**
      * There are cases when user is in progress of doing something.
      * Ex. dragging from one cell to another. It helps to avoid those mistakes.
+     * @param {Object} svg Element to catch events on
      */
-    _handleUnexpectedInteraction: function(frontLayer){
-        frontLayer.on('contextmenu',
-            function(){ d3.event.preventDefault(); });
+    _handleUnexpectedInteraction: function(svg){
+        svg.on('contextmenu', function(){ d3.event.preventDefault(); });
+        svg.on('touchmove',   function(){ d3.event.preventDefault(); });
         window.addEventListener('blur',
             function(){ GraphCell.rollbackActions.call(GraphCell); });
         window.addEventListener('mouseup',
             function(){ GraphCell.rollbackActions.call(GraphCell); });
-        window.addEventListener('touchmove',
-            function(e){ e.preventDefault(); });
     },
 
     /**
-     * TODO
+     * Initialize a temporary arrow, appears only when user is dragging.
+     * @param {Object} frontLayer Element to draw element on
      */
     _initTmpArrow: function(frontLayer){
         var arrow = frontLayer.append('svg:polygon')
@@ -136,14 +136,18 @@ var GraphBoard = Backbone.Model.extend(
     /**
      * Draws initial board data
      * Injects drag methods to get feedback
+     * @param {Object} board The board to be drawn
+     * @param {Object} layers Layers that each cell to span
      */
-    _initBoard: function (board, layers){
+    _initBoard: function (board, graphics){
         var cells = this.get('cells');
 
         GraphCell.dragStart = _.bind(this._dragStart, this);
         GraphCell.dragOver  = _.bind(this._dragOver,  this);
         GraphCell.dragOut   = _.bind(this._dragOut,   this);
         GraphCell.dragStop  = _.bind(this._dragStop,  this);
+        GraphCell.svg = graphics.svg[0][0];
+        GraphCell.cells = cells;
 
         Helpers.iterBoard(board, function(cell, row, col){
             if (_.isUndefined(cells[row])) { cells[row] = []; }
@@ -153,7 +157,7 @@ var GraphBoard = Backbone.Model.extend(
                  col: col,
                  power: cell.count},
                 {type: cell.type,
-                 layers: layers,
+                 layers: graphics.layers,
                  boardOffset: this.get('boardOffset')}
             );
         }, this);
@@ -180,46 +184,61 @@ var GraphBoard = Backbone.Model.extend(
         return this.get('logger');
     },
 
+    /**
+     * Determines if current user is the owner of given cell
+     * @param {int} row Row index of the cell
+     * @param {int} col Column index of the cell
+     * @return {bool} Assessment if current user is owner
+     */
     _isOwner: function(row, col){
         var boardData = this.get('boardData');
         return boardData.board[row][col].user === boardData.userId;
     },
 
     /**
-     * TODO
+     * Runs when dragging is started
+     * Applies only when current user is the owner
+     * Triggered by a cell
+     * @param {GraphCell} cell Cell that the event triggered
+     * @param {int} row Row index of the cell
+     * @param {int} col Column index of the cell
      */
     _dragStart: function(cell, row, col){
         if (!this._isOwner(row, col)){ return; }
 
-        // TODO why do we need this?
-        //Graphics.rollbackActions()
-
         this.set('dragSrc', cell);
-        console.log('dragstart');
         GraphCell.rollbackQueue.push([function(){
             this.set('dragSrc', null);
         }, this]);
     },
 
     /**
-     * TODO
+     * Runs when dragging went over a cell
+     * Applies only when current user is the owner
+     * Triggered by a cell
+     * @param {GraphCell} cell Cell that the event triggered
+     * @param {int} row Row index of the cell
+     * @param {int} col Column index of the cell
      */
     _dragOver: function(cell, row, col){
-        var srcCell = this.get('dragSrc');
-        if (!this._isOwner(row, col) && !srcCell){ return; }
+        var srcCell = this.get('dragSrc'),
+            hasSrcCell = !!srcCell,
+            isOwner = this._isOwner(row, col);
+        var isNeighbour = hasSrcCell && Helpers.isNeighbours(
+                srcCell.get('row'), srcCell.get('col'), row, col);
 
-        // TODO only allow dragging to neighbours
+        if (!hasSrcCell && !isOwner){ return; }
 
         // when mouse is up and only hovering
-        cell.animateHoverIn();
-        console.log('dragover');
-        GraphCell.rollbackQueue.push([function(){
-            cell.animateHoverOut();
-        }, this, null, 'dragover']);
-
+        if (isOwner || isNeighbour) {
+            cell.animateHoverIn();
+            GraphCell.rollbackQueue.push([function(){
+                cell.animateHoverOut();
+            }, this, null, 'dragover']);
+        }
 
         // when mouse is down and dragging
-        if (srcCell && cell.cid !== srcCell.cid) {
+        if (isNeighbour && cell.cid !== srcCell.cid) {
             this._moveTmpArrow(srcCell.get('coord'), cell.get('coord'));
             GraphCell.rollbackQueue.push([function(){
                 this._moveTmpArrow(null);
@@ -228,30 +247,41 @@ var GraphBoard = Backbone.Model.extend(
     },
 
     /**
-     * TODO
+     * Runs when dragged out of a cell
+     * Applies only when current user is the owner
+     * Triggered by a cell
+     * @param {GraphCell} cell Cell that the event triggered
+     * @param {int} row Row index of the cell
+     * @param {int} col Column index of the cell
      */
     _dragOut: function(cell, row, col){
         var srcCell = this.get('dragSrc');
         if (!this._isOwner(row, col) && !srcCell){ return; }
 
-        console.log('dragout');
         GraphCell.rollbackActions('dragover');
     },
 
     /**
-     * TODO
+     * Runs when dragging is completely stopped
+     * Applies only when current user is the owner
+     * Triggered by a cell
+     * @param {GraphCell} cell Cell that the event triggered
+     * @param {int} row Row index of the cell
+     * @param {int} col Column index of the cell
      */
     _dragStop: function(cell, row, col){
         var srcCell = this.get('dragSrc');
         if (!this._isOwner(row, col) && !srcCell){ return; }
 
-        console.log('dragstop');
-
         GraphCell.rollbackActions();
+        // TODO trigger move action
+        console.log(srcCell.get('row'), srcCell.get('col'), row, col);
     },
 
     /**
-     * TODO
+     * Allows tmp arrow to appear on board for src and dest coord.s
+     * @param {Object} coordSrc Source coordinate on the board
+     * @param {Object} coordDest Destination coordinate on the board
      */
     _moveTmpArrow: function(coordSrc, coordDest){
         if (coordSrc === null){

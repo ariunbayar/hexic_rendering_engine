@@ -61,8 +61,8 @@ var GraphCell = Backbone.Model.extend(
     _initCoord: function(row, col, boardOffset){
         var shiftX = (row % 2) ? 0 : (boardOffset.x / 2);
         var coord = {};
-        coord.x = col * boardOffset.x + boardOffset.r + shiftX;
-        coord.y = row * boardOffset.y + boardOffset.r;
+        coord.x = col * boardOffset.x + Constants.cellRadius + shiftX;
+        coord.y = row * boardOffset.y + Constants.cellRadius;
         this.set('coord', coord);
         return coord;
     },
@@ -184,7 +184,7 @@ var GraphCell = Backbone.Model.extend(
     },
 
     /**
-     * TODO
+     * Called when mouse is clicked down
      */
     _mouseDown: function(){
         if (!this.constructor.mouseDetected) { return; }
@@ -193,7 +193,7 @@ var GraphCell = Backbone.Model.extend(
     },
 
     /**
-     * TODO
+     * Triggered when mouse button is up
      */
     _mouseUp: function(){
         if (!this.constructor.mouseDetected) { return; }
@@ -202,7 +202,7 @@ var GraphCell = Backbone.Model.extend(
     },
 
     /**
-     * TODO
+     * Triggered when mouse went over this cell
      */
     _mouseOver: function(){
         if (!this.constructor.mouseDetected) { return; }
@@ -211,38 +211,95 @@ var GraphCell = Backbone.Model.extend(
     },
 
     /**
-     * TODO
+     * Triggered when mouse got out of the cell
      */
     _mouseOut: function(){
         if (!this.constructor.mouseDetected) { return; }
 
-        this.constructor.dragOut(this,  this.get('row'), this.get('col'));
+        this.constructor.dragOut(this, this.get('row'), this.get('col'));
     },
 
     /**
-     * TODO
+     * Triggered when user touched the cell
      */
     _touchStart: function(){
         if (!this.constructor.touchDetected) { return; }
-        // TODO
+
+        this.constructor.dragStart(this, this.get('row'), this.get('col'));
     },
 
     /**
-     * TODO
+     * Triggered when user moved over the touching cell
+     * TODO optimize
      */
     _touchMove: function(){
         if (!this.constructor.touchDetected) { return; }
-        // TODO
+
+        var coordArray = d3.mouse(this.constructor.svg),
+            x = coordArray[0],
+            y = coordArray[1],
+            radius = Constants.cellRadius * 0.9,
+            cells, _coord;
+
+        cells = this.constructor.getNeighbours(
+            this.get('row'), this.get('col'));
+        cells.push(this);
+
+        for (var i=0,l=cells.length; i < l; ++i) {
+            _coord = cells[i].get('coord');
+            if (Helpers.isPointInsideHexagon(_coord, radius, x, y)){
+                if (cells[i].get('_is_hovered')){ continue; }
+                cells[i].set('_is_hovered', true);
+                this.constructor.dragOver(
+                    cells[i], cells[i].get('row'), cells[i].get('col'));
+            }else{
+                if (cells[i].get('_is_hovered') !== true){ continue; }
+                cells[i].set('_is_hovered', false);
+                this.constructor.dragOut(
+                    cells[i], cells[i].get('row'), cells[i].get('col'));
+            }
+        }
     },
 
     /**
-     * TODO
+     * Triggered when user takes his hand away
      */
     _touchEnd: function(){
         if (!this.constructor.touchDetected) { return; }
-        // TODO
+
+        var coordArray = d3.mouse(this.constructor.svg),
+            cell = null,
+            x = coordArray[0],
+            y = coordArray[1],
+            coord = this.get('coord'),
+            row = this.get('row'),
+            col = this.get('col'),
+            radius = Constants.cellRadius * 0.9;
+
+        if (Helpers.isPointInsideHexagon(coord, radius, x, y)){
+            cell = this;
+        }else{
+            var cells = this.constructor.getNeighbours(row, col);
+            for (var i=0,l=cells.length; i < l; ++i){
+                var _coord = cells[i].get('coord');
+                if (Helpers.isPointInsideHexagon(_coord, radius, x, y)){
+                    cell = cells[i];
+                }
+            }
+        }
+
+        if (cell) {
+            if (cell.get('_is_hovered')){
+                cell.set('_is_hovered', false);
+                this.constructor.dragOut(cell, cell.get('row'), cell.get('col'));
+            }
+            this.constructor.dragStop(cell, cell.get('row'), cell.get('col'));
+        }
     },
 
+    /**
+     * Animates this cell as mouse is hovering above
+     */
     animateHoverIn: function(){
         var hexagon = this.get('hexagon');
         var t = d3.transform(hexagon.attr('transform'));
@@ -250,6 +307,9 @@ var GraphCell = Backbone.Model.extend(
         hexagon.attr('transform', t.toString());
     },
 
+    /**
+     * Animates this cell as mouse went out
+     */
     animateHoverOut: function(){
         var hexagon = this.get('hexagon');
         var t = d3.transform(hexagon.attr('transform'));
@@ -260,12 +320,13 @@ var GraphCell = Backbone.Model.extend(
 },{
 
     boardData: null,
+    svg: null,
 
     opaquePower: 50,
     minOpacity: 0.2,
 
-    touchDetected: false,  // @see GraphBoard._detectMouseOrTouch
-    mouseDetected: false,  // @see GraphBoard._detectMouseOrTouch
+    touchDetected: true,  // @see GraphBoard._detectMouseOrTouch
+    mouseDetected: true,  // @see GraphBoard._detectMouseOrTouch
 
     dragStart: null, // XXX to be overriden by {@link GraphBoard}
     dragOver : null, // XXX to be overriden by {@link GraphBoard}
@@ -297,6 +358,47 @@ var GraphCell = Backbone.Model.extend(
                 item[0].call(item[1]);
             }
         }
+    },
+
+    cells: null,
+    /**
+     * Get neighbours of a cell to detect if touchmove is
+     * hovering over its neighbours.
+     * Used heavily by touchmove event
+     * @param {int} row Row index to get its neighbours
+     * @param {int} col Column index to get its neighbours
+     * @return {Array} Array of {@link GraphCell}
+     */
+    getNeighbours: function(row, col){
+        var hasCellAt = function(_cells, _row, _col){
+            if (!_.isUndefined(_cells[_row])){
+                return !_.isUndefined(_cells[_row][_col]);
+            }
+            return false;
+        };
+
+        var neighbours = [],
+            shift = row % 2 ? 0 : 1;
+
+        if (hasCellAt(this.cells, row-1, col-1+shift)){
+            neighbours.push(this.cells[row-1][col-1+shift]);
+        }
+        if (hasCellAt(this.cells, row-1, col+shift)){
+            neighbours.push(this.cells[row-1][col+shift]);
+        }
+        if (hasCellAt(this.cells, row, col+1)){
+            neighbours.push(this.cells[row][col+1]);
+        }
+        if (hasCellAt(this.cells, row+1, col+shift)){
+            neighbours.push(this.cells[row+1][col+shift]);
+        }
+        if (hasCellAt(this.cells, row+1, col-1+shift)){
+            neighbours.push(this.cells[row+1][col-1+shift]);
+        }
+        if (hasCellAt(this.cells, row, col-1)){
+            neighbours.push(this.cells[row][col-1]);
+        }
+        return neighbours;
     }
 
 });

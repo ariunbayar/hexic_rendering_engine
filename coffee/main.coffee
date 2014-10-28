@@ -2,6 +2,7 @@ boardData = _initBoard(6, 2)
 game_engine = new GameEngine({}, {containerId:'#svg1', boardData: boardData})
 window.game_engine = game_engine  # XXX debug only
 
+return
 
 
 

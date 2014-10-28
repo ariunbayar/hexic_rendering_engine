@@ -3,6 +3,7 @@
 
 
 var Constants = {
+    cellRadius: 30,
     nonSelectForSVG:
         '-webkit-user-select: none;' +
         '-moz-user-select: none;' +
