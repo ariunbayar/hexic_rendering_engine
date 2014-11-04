@@ -14,7 +14,9 @@ var GraphCell = Backbone.Model.extend(
         col: 0,
         coord: null,
         hexagon: null,
-        text: null
+        arrow: null,
+        text: null,
+        move: null
     },
 
     /**
@@ -25,13 +27,10 @@ var GraphCell = Backbone.Model.extend(
      * @param {Object} attributes.power Power for the cell
      * @param {int} attributes.row Board row index
      * @param {int} attributes.col Board column index
-     * @param {Object} options.type One of: Cell
      * @param {Array} options.layers Layer elements. First layer is in the back
      * @param {int} options.boardOffset Pre-calculated offset between cells
      */
     initialize: function(attributes, options){
-        if (options.type !== 'cell'){ return; }
-
         var coord = this._initCoord(
             attributes.row,
             attributes.col,
@@ -39,15 +38,15 @@ var GraphCell = Backbone.Model.extend(
         );
         this._initHexagon(options.layers[0], coord);
         this._initText(options.layers[0], coord);
-        //this._initArrow(options.layers[1]);
+        this._initArrow(options.layers[1], coord);
         this._initOverlay(options.layers[2], coord);
 
         this.on('change:power', this._changedPower, this);
         this.on('change:userId', this._changedUserId, this);
-        //on('change:direction', @changedDirection, @)
+        this.on('change:move', this._changedMove, this);
 
         // trigger manually to update the changes as they are already changed
-        this.updateIfChanged(attributes.userId, attributes.power);
+        this.updateIfChanged(attributes.userId, attributes.power, null);
         this.trigger('change:userId', this, attributes.userId);
         this.trigger('change:power', this, attributes.power);
     },
@@ -100,11 +99,25 @@ var GraphCell = Backbone.Model.extend(
     },
 
     /**
+     * Draws an arrow on given layer and coord.
+     * @param {d3.select} layer Layer element as a response of d3.select()
+     * @param {Object} coord Current cell coordinate {x: <x>, y: <y>}
+     */
+    _initArrow: function(layer, coord){
+        var arrow = layer.append('svg:path')
+            .attr('d', Constants.arrow)
+            .attr('transform', 'translate(' + coord.x + ',' + coord.y + ')')
+            .attr('fill', this.constructor.boardColors.background)
+            .attr('visibility', 'hidden');
+      this.set('arrow', arrow);
+    },
+
+    /**
      * Triggers power and user change only when they needs to update
      * @param {string} userId User to be updated
      * @param {int} power Power to be updated
      */
-    updateIfChanged: function(userId, power){
+    updateIfChanged: function(userId, power, move){
         var newPower,
             oldPower = this.get('power'),
             powerChanged;
@@ -126,6 +139,13 @@ var GraphCell = Backbone.Model.extend(
         }
         if (power <= this.constructor.opaquePower && powerChanged){
             this.trigger('change:userId', this, userId);
+        }
+
+        // trigger move change
+        if (move && move.row !== null && move.col !== null){
+            this.set('move', move.row + '_' + move.col);
+        }else{
+            this.set('move', null);
         }
     },
 
@@ -151,12 +171,38 @@ var GraphCell = Backbone.Model.extend(
             this.constructor.opaquePower * (1 - this.constructor.minOpacity) +
             this.constructor.minOpacity;
         color = Helpers.blendColors(
-            this.constructor.boardData.colors[userId],
+            this.constructor.boardColors[userId],
             opacity,
-            this.constructor.boardData.colors.background
+            this.constructor.boardColors.background
         );
+
         this.get('hexagon').attr('fill', color);
         //this.get('arrow').attr('fill', this.BlendColors(this.get('color'), 1 - opacity, '#fdf6e3'))
+    },
+
+    /**
+     * Rotates move arrow to specified direction
+     * @param {GraphCell} model The current instance
+     * @param {string} move Destination cell location
+     */
+    _changedMove: function(model, move){
+        if (move === null){
+            this.get('arrow').style('visibility', 'hidden');
+            return;
+        }
+
+        var coordSrc = this.get('coord'),
+            _loc = move.split('_'),
+            coordDest = this.constructor.cells[_loc[0]][_loc[1]].get('coord');
+
+        var t = d3.transform(),
+            delta = {y: coordDest.y - coordSrc.y, x: coordDest.x - coordSrc.x};
+        t.translate = [coordSrc.x, coordSrc.y];
+        t.rotate = Math.atan2(delta.y, delta.x) * 180 / Math.PI;
+
+        this.get('arrow')
+            .style('visibility', 'visible')
+            .attr('transform', t.toString());
     },
 
     /**
@@ -319,10 +365,15 @@ var GraphCell = Backbone.Model.extend(
 
 },{
 
-    boardData: null,
+    /**
+     * Available colors for the board
+     *     0..N - Colors for users. Includes neutral user
+     *     background - Background color for this board
+     */
+    boardColors: null,
     svg: null,
 
-    opaquePower: 50,
+    opaquePower: 250,
     minOpacity: 0.2,
 
     touchDetected: true,  // @see GraphBoard._detectMouseOrTouch

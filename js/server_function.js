@@ -33,21 +33,6 @@ var _initBoard = function(size, userId) {
 var Helpers = {
 
     /**
-     * Iterates over the board by moving through rows and columns.
-     * Makes sure context exists
-     * @param {Object} board NxM array of boards
-     * @param {function} callback Callback function to run for every cell
-     * @param {*} context Context within the callback function (this)
-     */
-    iterBoard: function(board, callback, context){
-        for (var y = board.length - 1; y >= 0; y--) {
-            for (var x = board[y].length - 1; x >= 0; x--) {
-                callback.call(context, board[y][x], y, x);
-            }
-        }
-    },
-
-    /**
      * Blends two colors to avoid any opacity overlay issues
      * @param {string} fgColor Color to be placed in front
      * @param {string} fgOpacity Transparency for front color
@@ -55,6 +40,8 @@ var Helpers = {
      * @return {d3.rgb} Resulting opaque color
      */
     blendColors: function(fgColor, fgOpacity, bgColor){
+        if (fgOpacity === 0){ return bgColor; }
+
         var fg = d3.rgb(fgColor);
         var bg = d3.rgb(bgColor);
 

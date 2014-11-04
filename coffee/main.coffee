@@ -1,6 +1,27 @@
-boardData = _initBoard(6, 2)
-game_engine = new GameEngine({}, {containerId:'#svg1', boardData: boardData})
-window.game_engine = game_engine  # XXX debug only
+#return
+user_id = location.hash.substr(1)
+urlto = (uri)-> 'http://localhost:81/hexic_srv/' + uri + '?user_id=' + user_id
+
+d3.json(urlto('start.php'), (error, boardData)->
+  return console.log(error) if error
+
+  #boardData = _initBoard(6, 2)
+  game_engine = new GameEngine({}, {containerId:'#svg1', boardData: boardData})
+  window.game_engine = game_engine
+  game_engine.onMoveTrigger(->
+    data = JSON.stringify(Array.prototype.slice.call(arguments))
+    d3.json(urlto('move.php')).post(data)
+  , this)
+  game_engine.start()
+
+  cb = (error, rsp)->
+    if rsp and rsp.responseText != 'noop'
+      game_engine.moveReceived.apply(game_engine, JSON.parse(rsp.responseText))
+    d3.xhr(urlto('get_pending_move.php'), 'text/plain', cb)
+
+  cb()
+)
+
 
 return
 

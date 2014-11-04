@@ -15,12 +15,14 @@ var GraphBoard = Backbone.Model.extend(
                 x: 2 * Constants.cellRadius * sin60,
                 y: 2 * Constants.cellRadius * sin60 * sin60,
             },
-            boardData: null,
+            board: null,
+            boardColors: null,
             cells: [],
 
-            // dynamic or at least part of it
+            // dynamic properties
             tmpArrow: null,
-            dragSrc: null
+            dragSrc: null,
+            boundMoveFunc: null
         };
     },
 
@@ -29,33 +31,25 @@ var GraphBoard = Backbone.Model.extend(
      * @augments Backbone.Model
      * @constructs
      * @param {string} options.containerId Container where SVG will be added. As in CSS selector
-     * @param {Object} options.boardData
-     *      Initial board information<br>
-     *      boardData.board - The board itself<br>
-     *      boardData.width - Maximum row size<br>
-     *      boardData.height - Number of row the board spans<br>
-     *      boardData.userId - Current user id as in boardData.board
-     *      boardData.colors - Available colors for the board<br>
-     *          0..N - Colors for users. Includes neutral user
-     *          background - Background color for this board
+     * @param {Object} options.width Maximum row size
+     * @param {Object} options.height Number of row the board spans
      */
     initialize: function(attributes, options){
         var layerNames= ['layer3', 'layer2', 'layer1'];
 
-        this.set('boardData', options.boardData);
-        GraphCell.boardData = options.boardData;
+        GraphCell.boardColors = attributes.boardColors;
 
         var graphics = this._initSVG(
             options.containerId,
-            options.boardData.width,
-            options.boardData.height,
+            options.width,
+            options.height,
             layerNames
         );
         var frontLayer = graphics.layers[graphics.layers.length - 1];
         this._detectMouseOrTouch(frontLayer);
         this._handleUnexpectedInteraction(graphics.svg);
         this._initTmpArrow(frontLayer);
-        this._initBoard(options.boardData.board, graphics);
+        this._initBoard(attributes.board, graphics);
 
         this.set('logger', new Logger(options.containerId));
     },
@@ -136,7 +130,7 @@ var GraphBoard = Backbone.Model.extend(
     /**
      * Draws initial board data
      * Injects drag methods to get feedback
-     * @param {Object} board The board to be drawn
+     * @param {Board} board The {@link Board} to be drawn
      * @param {Object} layers Layers that each cell to span
      */
     _initBoard: function (board, graphics){
@@ -149,15 +143,14 @@ var GraphBoard = Backbone.Model.extend(
         GraphCell.svg = graphics.svg[0][0];
         GraphCell.cells = cells;
 
-        Helpers.iterBoard(board, function(cell, row, col){
+        board.each(function(cell, row, col){
             if (_.isUndefined(cells[row])) { cells[row] = []; }
             cells[row][col] = new GraphCell(
                 {userId: cell.user,
                  row: row,
                  col: col,
                  power: cell.count},
-                {type: cell.type,
-                 layers: graphics.layers,
+                {layers: graphics.layers,
                  boardOffset: this.get('boardOffset')}
             );
         }, this);
@@ -165,13 +158,14 @@ var GraphBoard = Backbone.Model.extend(
 
     /**
      * Renders the board at every {@link GameEngine#tick}
-     * @param {Array} board Updated board data to render
+     * @param {Board} board Updated board data to render
      */
     render: function(board){
         var cells = this.get('cells');
 
-        Helpers.iterBoard(board, function(cell, row, col){
-            cells[row][col].updateIfChanged(cell.user, cell.count);
+        board.each(function(cell, row, col){
+            cells[row][col].updateIfChanged(
+                cell.user, cell.count, cell.move);
         }, this);
     },
 
@@ -185,17 +179,6 @@ var GraphBoard = Backbone.Model.extend(
     },
 
     /**
-     * Determines if current user is the owner of given cell
-     * @param {int} row Row index of the cell
-     * @param {int} col Column index of the cell
-     * @return {bool} Assessment if current user is owner
-     */
-    _isOwner: function(row, col){
-        var boardData = this.get('boardData');
-        return boardData.board[row][col].user === boardData.userId;
-    },
-
-    /**
      * Runs when dragging is started
      * Applies only when current user is the owner
      * Triggered by a cell
@@ -204,7 +187,7 @@ var GraphBoard = Backbone.Model.extend(
      * @param {int} col Column index of the cell
      */
     _dragStart: function(cell, row, col){
-        if (!this._isOwner(row, col)){ return; }
+        if (!this.get('board').isOwnerOf(row, col)){ return; }
 
         this.set('dragSrc', cell);
         GraphCell.rollbackQueue.push([function(){
@@ -223,7 +206,7 @@ var GraphBoard = Backbone.Model.extend(
     _dragOver: function(cell, row, col){
         var srcCell = this.get('dragSrc'),
             hasSrcCell = !!srcCell,
-            isOwner = this._isOwner(row, col);
+            isOwner = this.get('board').isOwnerOf(row, col);
         var isNeighbour = hasSrcCell && Helpers.isNeighbours(
                 srcCell.get('row'), srcCell.get('col'), row, col);
 
@@ -255,8 +238,9 @@ var GraphBoard = Backbone.Model.extend(
      * @param {int} col Column index of the cell
      */
     _dragOut: function(cell, row, col){
-        var srcCell = this.get('dragSrc');
-        if (!this._isOwner(row, col) && !srcCell){ return; }
+        var srcCell = this.get('dragSrc'),
+            isOwner = this.get('board').isOwnerOf(row, col);
+        if (!isOwner && !srcCell){ return; }
 
         GraphCell.rollbackActions('dragover');
     },
@@ -270,12 +254,19 @@ var GraphBoard = Backbone.Model.extend(
      * @param {int} col Column index of the cell
      */
     _dragStop: function(cell, row, col){
-        var srcCell = this.get('dragSrc');
-        if (!this._isOwner(row, col) && !srcCell){ return; }
+        var srcCell = this.get('dragSrc'),
+            isOwner = this.get('board').isOwnerOf(row, col);
+        if (!isOwner && !srcCell){ return; }
 
         GraphCell.rollbackActions();
-        // TODO trigger move action
-        console.log(srcCell.get('row'), srcCell.get('col'), row, col);
+
+        var isNeighbour = Helpers.isNeighbours(
+                srcCell.get('row'), srcCell.get('col'), row, col);
+        if (isNeighbour) {
+            this.get('boundMoveFunc')(
+                srcCell.get('row'), srcCell.get('col'),
+                row, col);
+        }
     },
 
     /**
@@ -297,8 +288,15 @@ var GraphBoard = Backbone.Model.extend(
         this.get('tmpArrow')
             .style('visibility', 'visible')
             .attr('transform', t.toString());
-    }
+    },
 
+    /**
+     * Binds a trigger move function to be called by user interaction
+     * @param {function} callback Callback function
+     */
+    bindMoveFunc: function(callback){
+        this.set('boundMoveFunc', callback);
+    }
 });
 window.GraphBoard = GraphBoard;
 

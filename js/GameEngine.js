@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 /* globals Backbone, _ */
-/* globals GraphBoard, Helpers */
+/* globals GraphBoard, Board, Helpers */
 /* globals _initBoard */
 
 
@@ -19,7 +19,7 @@ var GameEngine = Backbone.Model.extend(
         // tick specific
         tps: 60,  // ticks per second
         board: null,
-        tickId: 0,
+        tickId: 1,
         timeStarted: null,
         syncFailOffset: 2000  // milliseconds
     },
@@ -42,13 +42,26 @@ var GameEngine = Backbone.Model.extend(
      *          background - Background color for this board
      */
     initialize: function(attributes, options){
-        var graphic = new GraphBoard({}, options);
-
+        var board = new Board({
+            cells : options.boardData.board,
+            userId: options.boardData.userId
+        });
+        var graphic = new GraphBoard(
+            {board: board, boardColors: options.boardData.colors},
+            {containerId: options.containerId,
+             width: options.boardData.width,
+             height: options.boardData.height}
+        );
         this.set('graphic', graphic);
-        this.set('board', options.boardData.board);
+        this.set('board', board);
         this.set('userId', options.boardData.userId);
         this.set('logger', graphic.getLogger());
-        // Here we go
+    },
+
+    /**
+     * Start ticking
+     */
+    start: function(){
         this.set('timeStarted', +new Date());
         this.tick();
     },
@@ -68,7 +81,8 @@ var GameEngine = Backbone.Model.extend(
             intervalFix, fn;
 
         // do processing and rendering
-        this.processBoard(tick);
+        this.get('board').process(tick);
+        this.set('tickId', tick + 1);
         if (!isCatchingUp && !this.get('isFrameScheduled')) {
             var frameInterval = 1000 / this.get('fps'),
                 runDuration = +new Date() - timeStarted,
@@ -76,14 +90,13 @@ var GameEngine = Backbone.Model.extend(
                 self = this;
             setTimeout(function(){
                 self.set('isFrameScheduled', true);
-                //console.log('render');
                 self.get('graphic').render(self.get('board'));
                 self.set('isFrameScheduled', false);
             }, nextFrameAt);
         }
 
         intervalFix = +new Date() - timeStarted - tick * tickInterval;
-        if (intervalFix < 0) { intervalFix = 0; }  // Running fast? Thats OK
+        //if (intervalFix < 0) { intervalFix = 0; }  // Running fast? Thats OK
 
         if (intervalFix > this.get('syncFailOffset')) {
             this.get('logger').log('Game out of sync');
@@ -96,30 +109,23 @@ var GameEngine = Backbone.Model.extend(
     },
 
     /**
-     * Heavy actions to increment and calculate attacks for the board
-     * It has to run for every tick. Missing one will result sync failure
-     * @param {int} tick Current tick
+     * Runs when another user move was received
      */
-    processBoard: function(tick){
+    moveReceived: function(fy, fx, ty, tx, tickId){
         var board = this.get('board');
-
-        var incrBy = tick % this.get('tps') ? 0 : 1;
-        incrBy = 1;
-
-        Helpers.iterBoard(board, function(cell, y, x){
-            if (cell.user) {
-                cell.count += incrBy;
-            }
-        }, this);
-
-        this.set('tickId', this.get('tickId') + 1);
+        console.log('move received', fy, fx, ty, tx, tickId);
+        board.move(fy, fx, ty, tx);
     },
 
     /**
-     * Runs when another user move was received
+     * Binds trigger function
+     * @param {function} callback Called when a move is triggered
      */
-    move: function(){
-        // TODO
+    onMoveTrigger: function(callback, context){
+        var self = this;
+        this.get('graphic').bindMoveFunc(function(fy, fx, ty, tx){
+            callback.call(context, fy, fx, ty, tx, self.get('tickId'));
+        });
     }
 
 });
