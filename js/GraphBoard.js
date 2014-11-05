@@ -16,13 +16,21 @@ var GraphBoard = Backbone.Model.extend(
                 y: 2 * Constants.cellRadius * sin60 * sin60,
             },
             board: null,
+            /**
+             * Available colors for the board
+             *     0..N - Colors for users. Includes neutral user
+             *     background - Background color for this board
+             */
             boardColors: null,
             cells: [],
+            svg: null,
+            boundMoveFunc: null,
+            mouseDetected: true,
+            touchDetected: true,
 
-            // dynamic properties
+            // temporary properties
             tmpArrow: null,
-            dragSrc: null,
-            boundMoveFunc: null
+            dragSrc: null
         };
     },
 
@@ -37,8 +45,6 @@ var GraphBoard = Backbone.Model.extend(
     initialize: function(attributes, options){
         var layerNames= ['layer3', 'layer2', 'layer1'];
 
-        GraphCell.boardColors = attributes.boardColors;
-
         var graphics = this._initSVG(
             options.containerId,
             options.width,
@@ -49,7 +55,9 @@ var GraphBoard = Backbone.Model.extend(
         this._detectMouseOrTouch(frontLayer);
         this._handleUnexpectedInteraction(graphics.svg);
         this._initTmpArrow(frontLayer);
-        this._initBoard(attributes.board, graphics);
+        this._initBoard(attributes.board, graphics.layers);
+
+        _.bindAll(this, 'dragStart', 'dragOver', 'dragOut', 'dragStop');
 
         this.set('logger', new Logger(options.containerId));
     },
@@ -76,12 +84,13 @@ var GraphBoard = Backbone.Model.extend(
             layers.push(svg.append('g').attr('id', layerNames[i]));
         }
 
+        this.set('svg', svg[0][0]);
+
         return {svg: svg, layers: layers};
     },
 
     /**
-     * Binds events to detect mouse or touch event to
-     * further set it to {@link GraphCell} properties
+     * Binds events to detect mouse or touch event
      * @param {Object} frontLayer Element to catch events on
      */
     _detectMouseOrTouch: function(frontLayer){
@@ -91,11 +100,11 @@ var GraphBoard = Backbone.Model.extend(
         el.on('touchstart', function(){
             el.on('mousemove', null);
             el.on('touchstart', null);
-            GraphCell.mouseDetected = false;
+            self.set('mouseDetected', false);
         }).on('mousemove', function(){
             el.on('mousemove', null);
             el.on('touchstart', null);
-            GraphCell.touchDetected = false;
+            self.set('touchDetected', false);
         });
     },
 
@@ -105,12 +114,13 @@ var GraphBoard = Backbone.Model.extend(
      * @param {Object} svg Element to catch events on
      */
     _handleUnexpectedInteraction: function(svg){
+        var g = this.constructor;
         svg.on('contextmenu', function(){ d3.event.preventDefault(); });
         svg.on('touchmove',   function(){ d3.event.preventDefault(); });
         window.addEventListener('blur',
-            function(){ GraphCell.rollbackActions.call(GraphCell); });
+            function(){ g.rollbackActions.call(g); });
         window.addEventListener('mouseup',
-            function(){ GraphCell.rollbackActions.call(GraphCell); });
+            function(){ g.rollbackActions.call(g); });
     },
 
     /**
@@ -133,24 +143,18 @@ var GraphBoard = Backbone.Model.extend(
      * @param {Board} board The {@link Board} to be drawn
      * @param {Object} layers Layers that each cell to span
      */
-    _initBoard: function (board, graphics){
+    _initBoard: function (board, layers){
         var cells = this.get('cells');
-
-        GraphCell.dragStart = _.bind(this._dragStart, this);
-        GraphCell.dragOver  = _.bind(this._dragOver,  this);
-        GraphCell.dragOut   = _.bind(this._dragOut,   this);
-        GraphCell.dragStop  = _.bind(this._dragStop,  this);
-        GraphCell.svg = graphics.svg[0][0];
-        GraphCell.cells = cells;
 
         board.each(function(cell, row, col){
             if (_.isUndefined(cells[row])) { cells[row] = []; }
             cells[row][col] = new GraphCell(
-                {userId: cell.user,
+                {gboard: this,
+                 userId: cell.user,
                  row: row,
                  col: col,
                  power: cell.count},
-                {layers: graphics.layers,
+                {layers: layers,
                  boardOffset: this.get('boardOffset')}
             );
         }, this);
@@ -186,11 +190,11 @@ var GraphBoard = Backbone.Model.extend(
      * @param {int} row Row index of the cell
      * @param {int} col Column index of the cell
      */
-    _dragStart: function(cell, row, col){
+    dragStart: function(cell, row, col){
         if (!this.get('board').isOwnerOf(row, col)){ return; }
 
         this.set('dragSrc', cell);
-        GraphCell.rollbackQueue.push([function(){
+        this.constructor.rollbackQueue.push([function(){
             this.set('dragSrc', null);
         }, this]);
     },
@@ -203,7 +207,7 @@ var GraphBoard = Backbone.Model.extend(
      * @param {int} row Row index of the cell
      * @param {int} col Column index of the cell
      */
-    _dragOver: function(cell, row, col){
+    dragOver: function(cell, row, col){
         var srcCell = this.get('dragSrc'),
             hasSrcCell = !!srcCell,
             isOwner = this.get('board').isOwnerOf(row, col);
@@ -215,7 +219,7 @@ var GraphBoard = Backbone.Model.extend(
         // when mouse is up and only hovering
         if (isOwner || isNeighbour) {
             cell.animateHoverIn();
-            GraphCell.rollbackQueue.push([function(){
+            this.constructor.rollbackQueue.push([function(){
                 cell.animateHoverOut();
             }, this, null, 'dragover']);
         }
@@ -223,7 +227,7 @@ var GraphBoard = Backbone.Model.extend(
         // when mouse is down and dragging
         if (isNeighbour && cell.cid !== srcCell.cid) {
             this._moveTmpArrow(srcCell.get('coord'), cell.get('coord'));
-            GraphCell.rollbackQueue.push([function(){
+            this.constructor.rollbackQueue.push([function(){
                 this._moveTmpArrow(null);
             }, this, null, 'dragover']);
         }
@@ -237,12 +241,12 @@ var GraphBoard = Backbone.Model.extend(
      * @param {int} row Row index of the cell
      * @param {int} col Column index of the cell
      */
-    _dragOut: function(cell, row, col){
+    dragOut: function(cell, row, col){
         var srcCell = this.get('dragSrc'),
             isOwner = this.get('board').isOwnerOf(row, col);
         if (!isOwner && !srcCell){ return; }
 
-        GraphCell.rollbackActions('dragover');
+        this.constructor.rollbackActions('dragover');
     },
 
     /**
@@ -253,12 +257,12 @@ var GraphBoard = Backbone.Model.extend(
      * @param {int} row Row index of the cell
      * @param {int} col Column index of the cell
      */
-    _dragStop: function(cell, row, col){
+    dragStop: function(cell, row, col){
         var srcCell = this.get('dragSrc'),
             isOwner = this.get('board').isOwnerOf(row, col);
         if (!isOwner && !srcCell){ return; }
 
-        GraphCell.rollbackActions();
+        this.constructor.rollbackActions();
 
         var isNeighbour = Helpers.isNeighbours(
                 srcCell.get('row'), srcCell.get('col'), row, col);
@@ -297,6 +301,35 @@ var GraphBoard = Backbone.Model.extend(
     bindMoveFunc: function(callback){
         this.set('boundMoveFunc', callback);
     }
+}, {
+
+    rollbackQueue: [],
+    /**
+     * Helps to avoid mis-drawings on the board. Basically meaning to cleanup.
+     * There are cases when user is in progress of doing something.
+     * Ex. dragging from one cell to another. And a popup opens
+     * @param {string} label Process queues with given label
+     */
+    rollbackActions: function(label){
+        var item,
+            idx = this.rollbackQueue.length;
+
+        while (idx--) {
+            // XXX notice iterating from last element
+            // XXX item: [func, context, args, label]
+            item = this.rollbackQueue[idx];
+            if (label && item[3] !== label){ continue; }
+
+            this.rollbackQueue.splice(idx, 1);
+
+            if (item[2]) {
+                item[0].apply(item[1], item[2]);
+            } else {
+                item[0].call(item[1]);
+            }
+        }
+    }
+
 });
 window.GraphBoard = GraphBoard;
 

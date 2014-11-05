@@ -15,6 +15,7 @@ var GameEngine = Backbone.Model.extend(
         graphic: null,
         fps: 25,  // frames per second
         isFrameScheduled: false,
+        logger: null,
 
         // tick specific
         tps: 60,  // ticks per second

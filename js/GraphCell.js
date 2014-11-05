@@ -8,6 +8,7 @@ var GraphCell = Backbone.Model.extend(
 /** @lends GraphCell.prototype */
 {
     defaults: {
+        gboard: null,
         power: 0,
         userId: null,
         row: 0,
@@ -107,7 +108,7 @@ var GraphCell = Backbone.Model.extend(
         var arrow = layer.append('svg:path')
             .attr('d', Constants.arrow)
             .attr('transform', 'translate(' + coord.x + ',' + coord.y + ')')
-            .attr('fill', this.constructor.boardColors.background)
+            .attr('fill', this.get('gboard').get('boardColors').background)
             .attr('visibility', 'hidden');
       this.set('arrow', arrow);
     },
@@ -171,9 +172,9 @@ var GraphCell = Backbone.Model.extend(
             this.constructor.opaquePower * (1 - this.constructor.minOpacity) +
             this.constructor.minOpacity;
         color = Helpers.blendColors(
-            this.constructor.boardColors[userId],
+            this.get('gboard').get('boardColors')[userId],
             opacity,
-            this.constructor.boardColors.background
+            this.get('gboard').get('boardColors').background
         );
 
         this.get('hexagon').attr('fill', color);
@@ -193,7 +194,7 @@ var GraphCell = Backbone.Model.extend(
 
         var coordSrc = this.get('coord'),
             _loc = move.split('_'),
-            coordDest = this.constructor.cells[_loc[0]][_loc[1]].get('coord');
+            coordDest = this.get('gboard').get('cells')[_loc[0]][_loc[1]].get('coord');
 
         var t = d3.transform(),
             delta = {y: coordDest.y - coordSrc.y, x: coordDest.x - coordSrc.x};
@@ -220,6 +221,8 @@ var GraphCell = Backbone.Model.extend(
             .attr('transform', translate + ' scale(1.04, 1.04)');
 
         // XXX Benchmark referencing self vs _.bind?
+        // TODO bind only when mouse or touch is detected
+        // TODO touch requires these to run upon detection
         overlay.on('mousedown', function(){ self._mouseDown.call(self);  });
         overlay.on('mouseup',   function(){ self._mouseUp.call(self);    });
         overlay.on('mouseover', function(){ self._mouseOver.call(self);  });
@@ -233,45 +236,50 @@ var GraphCell = Backbone.Model.extend(
      * Called when mouse is clicked down
      */
     _mouseDown: function(){
-        if (!this.constructor.mouseDetected) { return; }
+        var gboard = this.get('gboard');
+        if (!gboard.get('mouseDetected')) { return; }
 
-        this.constructor.dragStart(this, this.get('row'), this.get('col'));
+        gboard.dragStart(this, this.get('row'), this.get('col'));
     },
 
     /**
      * Triggered when mouse button is up
      */
     _mouseUp: function(){
-        if (!this.constructor.mouseDetected) { return; }
+        var gboard = this.get('gboard');
+        if (!gboard.get('mouseDetected')) { return; }
 
-        this.constructor.dragStop(this, this.get('row'), this.get('col'));
+        gboard.dragStop(this, this.get('row'), this.get('col'));
     },
 
     /**
      * Triggered when mouse went over this cell
      */
     _mouseOver: function(){
-        if (!this.constructor.mouseDetected) { return; }
+        var gboard = this.get('gboard');
+        if (!gboard.get('mouseDetected')) { return; }
 
-        this.constructor.dragOver(this, this.get('row'), this.get('col'));
+        gboard.dragOver(this, this.get('row'), this.get('col'));
     },
 
     /**
      * Triggered when mouse got out of the cell
      */
     _mouseOut: function(){
-        if (!this.constructor.mouseDetected) { return; }
+        var gboard = this.get('gboard');
+        if (!gboard.get('mouseDetected')) { return; }
 
-        this.constructor.dragOut(this, this.get('row'), this.get('col'));
+        gboard.dragOut(this, this.get('row'), this.get('col'));
     },
 
     /**
      * Triggered when user touched the cell
      */
     _touchStart: function(){
-        if (!this.constructor.touchDetected) { return; }
+        var gboard = this.get('gboard');
+        if (!gboard.get('touchDetected')) { return; }
 
-        this.constructor.dragStart(this, this.get('row'), this.get('col'));
+        gboard.dragStart(this, this.get('row'), this.get('col'));
     },
 
     /**
@@ -279,15 +287,17 @@ var GraphCell = Backbone.Model.extend(
      * TODO optimize
      */
     _touchMove: function(){
-        if (!this.constructor.touchDetected) { return; }
+        var gboard = this.get('gboard');
+        if (!gboard.get('touchDetected')) { return; }
 
-        var coordArray = d3.mouse(this.constructor.svg),
+        var coordArray = d3.mouse(gboard.get('svg')),
             x = coordArray[0],
             y = coordArray[1],
             radius = Constants.cellRadius * 0.9,
             cells, _coord;
 
         cells = this.constructor.getNeighbours(
+            gboard.get('cells'),
             this.get('row'), this.get('col'));
         cells.push(this);
 
@@ -296,12 +306,12 @@ var GraphCell = Backbone.Model.extend(
             if (Helpers.isPointInsideHexagon(_coord, radius, x, y)){
                 if (cells[i].get('_is_hovered')){ continue; }
                 cells[i].set('_is_hovered', true);
-                this.constructor.dragOver(
+                gboard.dragOver(
                     cells[i], cells[i].get('row'), cells[i].get('col'));
             }else{
                 if (cells[i].get('_is_hovered') !== true){ continue; }
                 cells[i].set('_is_hovered', false);
-                this.constructor.dragOut(
+                gboard.dragOut(
                     cells[i], cells[i].get('row'), cells[i].get('col'));
             }
         }
@@ -311,9 +321,10 @@ var GraphCell = Backbone.Model.extend(
      * Triggered when user takes his hand away
      */
     _touchEnd: function(){
-        if (!this.constructor.touchDetected) { return; }
+        var gboard = this.get('gboard');
+        if (!gboard.get('touchDetected')) { return; }
 
-        var coordArray = d3.mouse(this.constructor.svg),
+        var coordArray = d3.mouse(gboard.get('svg')),
             cell = null,
             x = coordArray[0],
             y = coordArray[1],
@@ -325,7 +336,8 @@ var GraphCell = Backbone.Model.extend(
         if (Helpers.isPointInsideHexagon(coord, radius, x, y)){
             cell = this;
         }else{
-            var cells = this.constructor.getNeighbours(row, col);
+            var cells = this.constructor.getNeighbours(
+                    gboard.get('cells'), row, col);
             for (var i=0,l=cells.length; i < l; ++i){
                 var _coord = cells[i].get('coord');
                 if (Helpers.isPointInsideHexagon(_coord, radius, x, y)){
@@ -337,9 +349,9 @@ var GraphCell = Backbone.Model.extend(
         if (cell) {
             if (cell.get('_is_hovered')){
                 cell.set('_is_hovered', false);
-                this.constructor.dragOut(cell, cell.get('row'), cell.get('col'));
+                gboard.dragOut(cell, cell.get('row'), cell.get('col'));
             }
-            this.constructor.dragStop(cell, cell.get('row'), cell.get('col'));
+            gboard.dragStop(cell, cell.get('row'), cell.get('col'));
         }
     },
 
@@ -365,53 +377,9 @@ var GraphCell = Backbone.Model.extend(
 
 },{
 
-    /**
-     * Available colors for the board
-     *     0..N - Colors for users. Includes neutral user
-     *     background - Background color for this board
-     */
-    boardColors: null,
-    svg: null,
-
     opaquePower: 250,
     minOpacity: 0.2,
 
-    touchDetected: true,  // @see GraphBoard._detectMouseOrTouch
-    mouseDetected: true,  // @see GraphBoard._detectMouseOrTouch
-
-    dragStart: null, // XXX to be overriden by {@link GraphBoard}
-    dragOver : null, // XXX to be overriden by {@link GraphBoard}
-    dragOut  : null, // XXX to be overriden by {@link GraphBoard}
-    dragStop : null, // XXX to be overriden by {@link GraphBoard}
-
-    rollbackQueue: [],
-    /**
-     * Helps to avoid mis-drawings on the board. Basically meaning to cleanup.
-     * There are cases when user is in progress of doing something.
-     * Ex. dragging from one cell to another. And a popup opens
-     * @param {string} label Process queues with given label
-     */
-    rollbackActions: function(label){
-        var item,
-            idx = this.rollbackQueue.length;
-
-        while (idx--) {
-            // XXX notice iterating from last element
-            // XXX item: [func, context, args, label]
-            item = this.rollbackQueue[idx];
-            if (label && item[3] !== label){ continue; }
-
-            this.rollbackQueue.splice(idx, 1);
-
-            if (item[2]) {
-                item[0].apply(item[1], item[2]);
-            } else {
-                item[0].call(item[1]);
-            }
-        }
-    },
-
-    cells: null,
     /**
      * Get neighbours of a cell to detect if touchmove is
      * hovering over its neighbours.
@@ -420,7 +388,7 @@ var GraphCell = Backbone.Model.extend(
      * @param {int} col Column index to get its neighbours
      * @return {Array} Array of {@link GraphCell}
      */
-    getNeighbours: function(row, col){
+    getNeighbours: function(cells, row, col){
         var hasCellAt = function(_cells, _row, _col){
             if (!_.isUndefined(_cells[_row])){
                 return !_.isUndefined(_cells[_row][_col]);
@@ -431,23 +399,23 @@ var GraphCell = Backbone.Model.extend(
         var neighbours = [],
             shift = row % 2 ? 0 : 1;
 
-        if (hasCellAt(this.cells, row-1, col-1+shift)){
-            neighbours.push(this.cells[row-1][col-1+shift]);
+        if (hasCellAt(cells, row-1, col-1+shift)){
+            neighbours.push(cells[row-1][col-1+shift]);
         }
-        if (hasCellAt(this.cells, row-1, col+shift)){
-            neighbours.push(this.cells[row-1][col+shift]);
+        if (hasCellAt(cells, row-1, col+shift)){
+            neighbours.push(cells[row-1][col+shift]);
         }
-        if (hasCellAt(this.cells, row, col+1)){
-            neighbours.push(this.cells[row][col+1]);
+        if (hasCellAt(cells, row, col+1)){
+            neighbours.push(cells[row][col+1]);
         }
-        if (hasCellAt(this.cells, row+1, col+shift)){
-            neighbours.push(this.cells[row+1][col+shift]);
+        if (hasCellAt(cells, row+1, col+shift)){
+            neighbours.push(cells[row+1][col+shift]);
         }
-        if (hasCellAt(this.cells, row+1, col-1+shift)){
-            neighbours.push(this.cells[row+1][col-1+shift]);
+        if (hasCellAt(cells, row+1, col-1+shift)){
+            neighbours.push(cells[row+1][col-1+shift]);
         }
-        if (hasCellAt(this.cells, row, col-1)){
-            neighbours.push(this.cells[row][col-1]);
+        if (hasCellAt(cells, row, col-1)){
+            neighbours.push(cells[row][col-1]);
         }
         return neighbours;
     }
