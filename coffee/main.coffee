@@ -1,4 +1,8 @@
-#return
+return
+window.sound = ->
+  s = new Audio('/166184__drminky__retro-coin-collect.wav')
+  s.play()
+
 user_id = location.hash.substr(1)
 urlto = (uri)-> 'http://localhost:81/hexic_srv/' + uri + '?user_id=' + user_id
 

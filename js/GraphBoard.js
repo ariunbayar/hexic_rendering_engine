@@ -41,6 +41,7 @@ var GraphBoard = Backbone.Model.extend(
      * @param {string} options.containerId Container where SVG will be added. As in CSS selector
      * @param {Object} options.width Maximum row size
      * @param {Object} options.height Number of row the board spans
+     * @param {int} options.userId Current user id
      */
     initialize: function(attributes, options){
         var layerNames= ['layer3', 'layer2', 'layer1'];
@@ -56,6 +57,7 @@ var GraphBoard = Backbone.Model.extend(
         this._handleUnexpectedInteraction(graphics.svg);
         this._initTmpArrow(frontLayer);
         this._initBoard(attributes.board, graphics.layers);
+        this._highlightUserCells(attributes.board, options.userId);
 
         _.bindAll(this, 'dragStart', 'dragOver', 'dragOut', 'dragStop');
 
@@ -158,6 +160,20 @@ var GraphBoard = Backbone.Model.extend(
                  boardOffset: this.get('boardOffset')}
             );
         }, this);
+    },
+
+    /**
+     * TODO
+     */
+    _highlightUserCells: function(board, userId){
+        var cells = this.get('cells');
+        board.each(function(cell, row, col){
+            if (cell.user === userId){
+                setTimeout(function() { cells[row][col].highlight(); }, 300);
+                setTimeout(function() { cells[row][col].highlight(); }, 600);
+                setTimeout(function() { cells[row][col].highlight(); }, 900);
+            }
+        });
     },
 
     /**
@@ -300,6 +316,20 @@ var GraphBoard = Backbone.Model.extend(
      */
     bindMoveFunc: function(callback){
         this.set('boundMoveFunc', callback);
+    },
+
+    /**
+     * TODO
+     */
+    animateEnd: function(board){
+        var cells = this.get('cells');
+        for (var i=0; i < 3; ++i) {
+            board.each(function(c, y, x){
+                setTimeout(function(){
+                    cells[y][x].highlight();
+                }, x * 150 + i * 1000);
+            });
+        }
     }
 }, {
 

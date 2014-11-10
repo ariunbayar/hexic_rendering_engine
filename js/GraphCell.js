@@ -137,6 +137,7 @@ var GraphCell = Backbone.Model.extend(
         // trigger user change
         if (this.get('userId') !== userId){
             this.set('userId', userId);
+            if (window.sound) window.sound();
         }
         if (power <= this.constructor.opaquePower && powerChanged){
             this.trigger('change:userId', this, userId);
@@ -361,8 +362,15 @@ var GraphCell = Backbone.Model.extend(
     animateHoverIn: function(){
         var hexagon = this.get('hexagon');
         var t = d3.transform(hexagon.attr('transform'));
+        var oldTransform = t.toString();
+
         t.scale = [1.08, 1.08];
-        hexagon.attr('transform', t.toString());
+
+        hexagon.transition().duration(100)
+            .attrTween('transform', function(){
+                return d3.interpolateString(oldTransform, t.toString());
+            });
+
     },
 
     /**
@@ -371,8 +379,22 @@ var GraphCell = Backbone.Model.extend(
     animateHoverOut: function(){
         var hexagon = this.get('hexagon');
         var t = d3.transform(hexagon.attr('transform'));
+        var oldTransform = t.toString();
+
         t.scale = [1, 1];
-        hexagon.attr('transform', t.toString());
+
+        hexagon.transition().duration(100)
+            .attrTween('transform', function(){
+                return d3.interpolateString(oldTransform, t.toString());
+            });
+
+        //hexagon.attr('transform', t.toString());
+    },
+
+    highlight: function(){
+        var self = this;
+        self.animateHoverIn();
+        setTimeout(function(){ self.animateHoverOut(); }, 200);
     }
 
 },{

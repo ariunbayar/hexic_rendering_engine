@@ -3,6 +3,7 @@
 /* globals Backbone, _ */
 
 
+// TODO optimize
 var Board = Backbone.Model.extend(
 /** @lends Board.prototype */
 {
@@ -93,8 +94,6 @@ var Board = Backbone.Model.extend(
         }, this);
     },
 
-    __log: function(){ if (window.debug) { console.log.apply(console, arguments); } },
-
     /**
      * Decrements cells and collect power candidates
      * Each cell contains following values:
@@ -110,20 +109,16 @@ var Board = Backbone.Model.extend(
         var cells = this.get('cells');
 
         this.each(function(cell, y, x){
-            if (cell.move.row === null || cell.move.col === null){ return; }
-            var destCell = cells[cell.move.row][cell.move.col];
+            if (cell.move.row !== null && cell.move.col !== null){
+                var destCell = cells[cell.move.row][cell.move.col];
 
-            // extract the move out count
-            var movingCount = this._getDecrementOf(cell);
-            if (movingCount === 0) { return; }
+                // extract the move out count
+                var movingCount = this._getDecrementOf(cell);
+                if (movingCount === 0) { return; }
 
-            // apply subtraction on source cell
-            cell.count -= movingCount;
+                // apply subtraction on source cell
+                cell.count -= movingCount;
 
-            if (cell.user === destCell.user){
-                // directly apply for same user
-                destCell.count += movingCount;
-            }else{
                 // populate candidates on destination cell
                 if (!(cell.user in destCell.candidates)){
                     destCell.candidates[cell.user] = movingCount;
@@ -131,8 +126,14 @@ var Board = Backbone.Model.extend(
                     destCell.candidates[cell.user] += movingCount;
                 }
             }
+
+            // current user as one of its candidates
+            if (!(cell.user in cell.candidates)){
+                cell.candidates[cell.user] = cell.count;
+            }else{
+                cell.candidates[cell.user] += cell.count;
+            }
         }, this);
-        this.__log('_pickCandidates', JSON.parse(JSON.stringify(cells)));
     },
 
     /**
@@ -157,10 +158,10 @@ var Board = Backbone.Model.extend(
                     secondHighestCount = Math.max(count, secondHighestCount);
                     return w;
                 }
-            }, {user: cell.user, count: cell.count}, this);
-            this.__log(winner, secondHighestCount);
+            }, {user: 0, count: 0}, this);
 
             winner.user = +winner.user;
+            // remove any move if taken over
             if (cell.user !== winner.user) {
                 cell.move.row = null;
                 cell.move.col = null;
@@ -168,7 +169,6 @@ var Board = Backbone.Model.extend(
             cell.user = winner.user;
             cell.count = winner.count - secondHighestCount;
         }, this);
-        this.__log('_fightCandidates');
     },
 
     // TODO useless?
@@ -177,11 +177,29 @@ var Board = Backbone.Model.extend(
     },
 
     /**
-     *
+     * TODO
      */
     _getDecrementOf: function(cell){
         return Math.ceil(Math.log2(cell.count));
-        //return cell.count > 1 ? 1 : 0;
+    },
+
+    /**
+     * TODO
+     */
+    setSnapshot: function(jsonData){
+        var data = JSON.parse(jsonData);
+        this.set('cells', data.cells);
+        this.set('userId', data.userId);
+    },
+
+    /**
+     * TODO
+     */
+    getSnapshot: function(){
+        return JSON.stringify({
+            cells: this.get('cells'),
+            userId: this.get('userId')
+        });
     }
 
     // TODO winner
