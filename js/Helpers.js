@@ -1,34 +1,6 @@
-// TODO supposed to be on the server side
-var _initBoard = function(size, userId) {
-    var board = [];
-    for (var y=0; y<size; y++) {
-        board[y] = [];
-        for (var x=0; x<size; x++) {
-            board[y].push({
-                type: 'cell',
-                count: 10,
-                user: 0
-            });
-        }
-    }
-    board[0][0].count = 50;
-    board[0][0].user = 1;
-    board[size - 1][size - 1].count = 50;
-    board[size - 1][size - 1].user = 2;
-
-    return {
-        board: board,
-        width: size,
-        height: size,
-        userId: userId,
-        colors: {0: '#C8C8C8', 1: '#447786', 2: '#F72700', background: '#FDF6E3'}
-    };
-};
-
 /* globals d3 */
 
 
-// TODO move to separate places
 /** @lends Helpers */
 var Helpers = {
 

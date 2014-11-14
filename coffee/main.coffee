@@ -1,4 +1,3 @@
-return
 window.sound = ->
   s = new Audio('/166184__drminky__retro-coin-collect.wav')
   s.play()
@@ -9,7 +8,6 @@ urlto = (uri)-> 'http://localhost:81/hexic_srv/' + uri + '?user_id=' + user_id
 d3.json(urlto('start.php'), (error, boardData)->
   return console.log(error) if error
 
-  #boardData = _initBoard(6, 2)
   game_engine = new GameEngine({}, {containerId:'#svg1', boardData: boardData})
   window.game_engine = game_engine
   game_engine.onMoveTrigger(->

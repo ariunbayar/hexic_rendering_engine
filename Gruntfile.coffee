@@ -25,7 +25,7 @@ module.exports = (grunt) ->
         files: 'coffee/*.coffee'
       jshint:
         tasks: 'jshint'
-        files: 'js/*.js'
+        files: ['js/*.js', '!js/test.js']
 
     connect:
       options:
@@ -36,7 +36,7 @@ module.exports = (grunt) ->
           base: ["."]
 
     jshint:
-      files: ['js/*.js']
+      files: ['js/*.js', '!js/test.js']
       options:
         jshintrc: '.jshintrc'
 

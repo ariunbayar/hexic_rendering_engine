@@ -162,7 +162,7 @@ var GameEngine = Backbone.Model.extend(
         for (idx=0; idx<len; ++idx) {
             if (snapshots[idx].tickId > tickId){ break; }
         }
-        if (idx == 0){ return false; }
+        if (idx === 0){ return false; }
 
         snapshots.splice(idx);
         var snapshot = snapshots[idx - 1];

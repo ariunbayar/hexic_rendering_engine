@@ -47,7 +47,7 @@ var GraphCell = Backbone.Model.extend(
         this.on('change:move', this._changedMove, this);
 
         // trigger manually to update the changes as they are already changed
-        this.updateIfChanged(attributes.userId, attributes.power, null);
+        this.updateIfChanged(attributes.userId, attributes.power, [0, 0, 0]);
         this.trigger('change:userId', this, attributes.userId);
         this.trigger('change:power', this, attributes.power);
     },
@@ -137,18 +137,13 @@ var GraphCell = Backbone.Model.extend(
         // trigger user change
         if (this.get('userId') !== userId){
             this.set('userId', userId);
-            if (window.sound) window.sound();
+            if (window.sound) { window.sound(); }
         }
         if (power <= this.constructor.opaquePower && powerChanged){
             this.trigger('change:userId', this, userId);
         }
 
-        // trigger move change
-        if (move && move.row !== null && move.col !== null){
-            this.set('move', move.row + '_' + move.col);
-        }else{
-            this.set('move', null);
-        }
+        this.set('move', move);
     },
 
     /**
@@ -184,18 +179,18 @@ var GraphCell = Backbone.Model.extend(
 
     /**
      * Rotates move arrow to specified direction
+     * move format: [<has_move>, <row>, <col>]
      * @param {GraphCell} model The current instance
      * @param {string} move Destination cell location
      */
     _changedMove: function(model, move){
-        if (move === null){
+        if (move[0] === 0){
             this.get('arrow').style('visibility', 'hidden');
             return;
         }
 
         var coordSrc = this.get('coord'),
-            _loc = move.split('_'),
-            coordDest = this.get('gboard').get('cells')[_loc[0]][_loc[1]].get('coord');
+            coordDest = this.get('gboard').get('cells')[move[1]][move[2]].get('coord');
 
         var t = d3.transform(),
             delta = {y: coordDest.y - coordSrc.y, x: coordDest.x - coordSrc.x};

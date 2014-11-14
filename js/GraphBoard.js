@@ -184,8 +184,7 @@ var GraphBoard = Backbone.Model.extend(
         var cells = this.get('cells');
 
         board.each(function(cell, row, col){
-            cells[row][col].updateIfChanged(
-                cell.user, cell.count, cell.move);
+            cells[row][col].updateIfChanged(cell.user, cell.count, cell.move);
         }, this);
     },
 
