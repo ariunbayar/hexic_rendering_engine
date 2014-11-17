@@ -76,7 +76,7 @@ var GameEngine = Backbone.Model.extend(
 
     /**
      * Runs at every interval specified by GameEngine.tps
-     * Triggered by {@link initialize} method
+     * Triggered by {@link start} method
      * @param {bool} isCatchingUp
      *      Defines if current game is running slow and
      *      trying to catch up the timer
@@ -108,8 +108,8 @@ var GameEngine = Backbone.Model.extend(
                 runDuration = +new Date() - timeStarted,
                 nextFrameAt = frameInterval - runDuration % frameInterval,
                 self = this;
+            self.set('isFrameScheduled', true);
             setTimeout(function(){
-                self.set('isFrameScheduled', true);
                 self.get('graphic').render(self.get('board'));
                 self.set('isFrameScheduled', false);
             }, nextFrameAt);
@@ -133,9 +133,8 @@ var GameEngine = Backbone.Model.extend(
      * TODO
      */
     moveReceived: function(fy, fx, ty, tx, tickId){
-        var board = this.get('board');
         if (this._setTickTo(tickId)){
-            board.move(fy, fx, ty, tx);
+            this.get('board').move(fy, fx, ty, tx);
         }else{
             this.get('logger').log('Game out of sync!');
         }
