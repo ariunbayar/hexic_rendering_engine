@@ -9,7 +9,7 @@ To watch and compile coffeescript files into js::
 
 Prepare a release with following command::
 
-    coffee -cj Release/render_engine.js coffee/RenderEngine.coffee
+    TODO
 
 Build docs as follows::
 
