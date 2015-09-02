@@ -3,7 +3,7 @@ window.sound = ->
   s.play()
 
 user_id = location.hash.substr(1)
-urlto = (uri)-> 'http://localhost:81/hexic_srv/' + uri + '?user_id=' + user_id
+urlto = (uri)-> 'http://localhost:80/hexic_srv/' + uri + '?user_id=' + user_id
 
 d3.json(urlto('start.php'), (error, boardData)->
   return console.log(error) if error

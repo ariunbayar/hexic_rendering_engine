@@ -11,6 +11,10 @@ Prepare a release with following command::
 
     coffee -cj Release/render_engine.js coffee/RenderEngine.coffee
 
+Build docs as follows::
+
+    jsdoc ./js -d ./doc/
+
 Credits
 =======
 * [d3js](http://d3js.org)
