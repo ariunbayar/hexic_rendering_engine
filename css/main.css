@@ -11,6 +11,21 @@ body{
     display: inline-block;
 }
 
+@keyframes dash{
+    from {
+        stroke-dashoffset: 200;
+    }
+}
+
+path.arrow{
+    stroke: #fff;
+    stroke-width: 8px;
+    stroke-dasharray: 20,2;
+    stroke-linejoin: round;
+    animation: dash 12s linear infinite;
+    opacity: 0.4;
+}
+
 /* latin-ext */
 @font-face {
   font-family: 'Pathway Gothic One';

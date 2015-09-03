@@ -107,6 +107,7 @@ var GraphCell = Backbone.Model.extend(
     _initArrow: function(layer, coord){
         var arrow = layer.append('svg:path')
             .attr('d', Constants.arrow)
+            .attr('class', 'arrow')
             .attr('transform', 'translate(' + coord.x + ',' + coord.y + ')')
             .attr('fill', this.get('gboard').get('boardColors').background)
             .attr('visibility', 'hidden');
@@ -392,7 +393,9 @@ var GraphCell = Backbone.Model.extend(
         setTimeout(function(){ self.animateHoverOut(); }, 200);
     }
 
-},{
+},
+/** @lends GraphCell */
+{
 
     opaquePower: 250,
     minOpacity: 0.2,
