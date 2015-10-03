@@ -5,7 +5,9 @@
 
 // TODO optimize
 var Board = Backbone.Model.extend(
-/** @lends Board.prototype */
+/**
+ * @lends Board.prototype
+ */
 {
     defaults: {
         cells: null,
@@ -15,14 +17,23 @@ var Board = Backbone.Model.extend(
     /**
      * Initializes a new Board
      * Making each cell as:
+     * * count - Number of power for that cell
+     * * user - Current game user id
+     * * move - Represents a move to another cell
+     *         format: [<has_move>, <row>, <col>]
+     * * candidates - Shows incoming count per user to this cell
+     *         format: [<user>: <count>, ...]
+     *
+     * @classdesc Holds board data and functions for calculation
+     * @property {array} cells Contains two dimensional array of cells. Each containing:
+     *      type - Whether is gonna be a cell or for other uses
      *      count - Number of power for that cell
      *      user - Current game user id
      *      move - Represents a move to another cell
      *          format: [<has_move>, <row>, <col>]
      *      candidates - Shows incoming count per user to this cell
-     *          format: [<user>: <count>, ...]
-     *
-     * @classdesc Holds board data and functions for calculation
+     *          Used temporarily while calculating fights on a cell
+     *          format: [\<user\>: <count>, ...]
      * @augments Backbone.Model
      * @constructs
      */
@@ -223,9 +234,18 @@ var Board = Backbone.Model.extend(
 
     // TODO winner
 
-},{
-
+},
+/** @lends Board */
+{
+    /**
+    * Trottles cell increment rather than move in from other cell
+    * @default
+    */
     cellLimit: 250,
+    /**
+     * Defines user id for a neutral user
+     * @default
+     */
     neutralUser: 0
 
 });

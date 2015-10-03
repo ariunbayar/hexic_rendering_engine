@@ -1,134 +1,241 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>JSDoc: Class: Board</title>
+	<meta charset="utf-8">
+	<title>DocStrap Class: Board</title>
 
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.spacelab.css">
+
 </head>
 
 <body>
+<div class="container-fluid">
+	<div class="navbar navbar-fixed-top navbar-inverse">
+		<div class="navbar-inner">
+			<a class="brand" href="index.html">DocStrap</a>
+			<ul class="nav">
+				
+				<li class="dropdown">
+					<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b
+						class="caret"></b></a>
 
-<div id="main">
+					<ul class="dropdown-menu ">
+						
+						<li>
+							<a href="Board.html">Board</a>
+						</li>
+						
+						<li>
+							<a href="GameEngine.html">GameEngine</a>
+						</li>
+						
+						<li>
+							<a href="GraphBoard.html">GraphBoard</a>
+						</li>
+						
+						<li>
+							<a href="GraphCell.html">GraphCell</a>
+						</li>
+						
+						<li>
+							<a href="Logger.html">Logger</a>
+						</li>
+						
 
-    <h1 class="page-title">Class: Board</h1>
+					</ul>
+				</li>
+				
+				<li class="dropdown">
+					<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b
+						class="caret"></b></a>
 
-    
+					<ul class="dropdown-menu ">
+						
+						<li>
+							<a href="global.html#Constants">Constants</a>
+						</li>
+						
+
+					</ul>
+				</li>
+				
+			</ul>
+		</div>
+	</div>
+
+	<div class="row-fluid">
+
+		
+		<div class="span8">
+			
+				<div id="main">
+					
 
 
-
-
+	<h1 class="page-title">Class: Board</h1>
 <section>
 
 <header>
+    <h2>
+    Board
+    </h2>
     
-        <h2>
-        Board
-        </h2>
-        
-            <div class="class-description">Holds board data and functions for calculation</div>
-        
+        <div class="class-description"><p>Holds board data and functions for calculation</p></div>
     
 </header>
 
 <article>
     <div class="container-overview">
     
+
+    
         
-
-    
-    <h2>Constructor</h2>
-    
-
+<dt>
     <h4 class="name" id="Board"><span class="type-signature"></span>new Board<span class="signature">()</span><span class="type-signature"></span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Initializes a new Board
+Making each cell as:</p>
+<ul>
+<li>count - Number of power for that cell</li>
+<li>user - Current game user id</li>
+<li>move - Represents a move to another cell<pre class="prettyprint source"><code>  format: [&lt;has_move>, &lt;row>, &lt;col>]</code></pre></li>
+<li>candidates - Shows incoming count per user to this cell<pre class="prettyprint source"><code>  format: [&lt;user>: &lt;count>, ...]</code></pre></li>
+</ul>
+    </div>
     
 
+    
+    
+    
+    
+    
+    
+    
+<dl class="details">
+	
+
+	<h5 class="subsection-title">Properties:</h5>
+
+	<dl>
+
+<table class="props table table-striped">
+    <thead>
+	<tr>
+		
+		<th>Name</th>
+		
+
+		<th>Type</th>
+
+		
+
+		
+
+		<th class="last">Description</th>
+	</tr>
+	</thead>
+
+	<tbody>
+	
+
+        <tr>
+            
+                <td class="name"><code>cells</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">array</span>
 
 
-<div class="description">
-    Initializes a new Board
-Making each cell as:
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Contains two dimensional array of cells. Each containing:
+     type - Whether is gonna be a cell or for other uses
      count - Number of power for that cell
      user - Current game user id
      move - Represents a move to another cell
          format: [<has_move>, <row>, <col>]
      candidates - Shows incoming count per user to this cell
-         format: [<user>: <count>, ...]
-</div>
+         Used temporarily while calculating fights on a cell
+         format: [\<user\>: <count>, ...]</p></td>
+        </tr>
 
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line29">line 29</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
+	
+	</tbody>
+</table>
 </dl>
 
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
 
 
 
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-40">line 40</a>
+			</li>
+		</ul>
+	</dd>
+	
 
+	
 
+	
 
+	
+</dl>
 
+    
+    
 
+    
 
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
     
     </div>
@@ -136,368 +243,477 @@ Making each cell as:
     
         <h3 class="subsection-title">Extends</h3>
 
+        <ul>
+            <li>Backbone.Model</li>
+        </ul>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        <dl>
+            
+<dt class="name" id=".cellLimit">
+    <h4><span class="type-signature">&lt;static> </span>cellLimit<span class="type-signature"></span></h4>
+
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Trottles cell increment rather than move in from other cell</p>
+    </div>
+    
+
+    
+
+    
+<dl class="details">
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+	<dt class="tag-default">Default Value:</dt>
+	<dd class="tag-default">
+		<ul class="dummy">
+			<li>250</li>
+		</ul>
+	</dd>
+	
+
+
+
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-244">line 244</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
         
+            
+<dt class="name" id=".neutralUser">
+    <h4><span class="type-signature">&lt;static> </span>neutralUser<span class="type-signature"></span></h4>
 
-
-    <ul>
-        <li>Backbone.Model</li>
-    </ul>
-
-
+    
+</dt>
+<dd>
+    
+    <div class="description">
+        <p>Defines user id for a neutral user</p>
+    </div>
     
 
     
 
     
+<dl class="details">
+	
 
-     
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-249">line 249</a>
+			</li>
+		</ul>
+	</dd>
+	
+
+	
+
+	
+
+	
+</dl>
+
 
     
+</dd>
 
+        </dl>
     
 
     
         <h3 class="subsection-title">Methods</h3>
 
-        
+        <dl>
             
-
-    
-
+<dt>
     <h4 class="name" id="_electCandidateAndReset"><span class="type-signature"></span>_electCandidateAndReset<span class="signature">()</span><span class="type-signature"> &rarr; {object|bool}</span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Choose winner and reset candidates
+Candidates format: [<user>: <count>, ...]</p>
+    </div>
     
 
-
-
-<div class="description">
-    Choose winner and reset candidates
-Candidates format: [<user>: <count>, ...]
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-174">line 174</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line163">line 163</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
 <div class="param-desc">
-    False if there was no candidate
+    <p>False if there was no candidate</p>
 </div>
 
 
 
 <dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
 <span class="param-type">object</span>
 |
 
 <span class="param-type">bool</span>
 
 
-    </dd>
+	</dd>
 </dl>
-
-    
-
 
 
         
-            
-
     
+    
+</dd>
 
+        
+            
+<dt>
     <h4 class="name" id="_fightCandidates"><span class="type-signature"></span>_fightCandidates<span class="signature">()</span><span class="type-signature"></span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Candidates will be fought to decide winner on destination cell</p>
+    </div>
     
 
-
-
-<div class="description">
-    Candidates will be fought to decide winner on destination cell
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-191">line 191</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line180">line 180</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="_getDecrementOf"><span class="type-signature"></span>_getDecrementOf<span class="signature">()</span><span class="type-signature"> &rarr; {int}</span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Decrements a cell power being a candidate as a mover</p>
+    </div>
     
 
-
-
-<div class="description">
-    Decrements a cell power being a candidate as a mover
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-211">line 211</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line200">line 200</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
 <div class="param-desc">
-    Decrement amount
+    <p>Decrement amount</p>
 </div>
 
 
 
 <dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
 <span class="param-type">int</span>
 
 
-    </dd>
+	</dd>
 </dl>
 
+
+        
     
-
-
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="_increment"><span class="type-signature"></span>_increment<span class="signature">(tick)</span><span class="type-signature"></span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Increment user cells by 3 per second</p>
+    </div>
     
 
-
-
-<div class="description">
-    Increment user cells by 3 per second
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
     
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
 
-<table class="params">
+<table class="params table table-striped">
     <thead>
-    <tr>
-        
-        <th>Name</th>
-        
+	<tr>
+		
+		<th>Name</th>
+		
 
-        <th>Type</th>
+		<th>Type</th>
 
-        
+		
 
-        
+		
 
-        <th class="last">Description</th>
-    </tr>
-    </thead>
+		<th class="last">Description</th>
+	</tr>
+	</thead>
 
-    <tbody>
-    
+	<tbody>
+	
 
         <tr>
             
@@ -517,86 +733,82 @@ Candidates format: [<user>: <count>, ...]
 
             
 
-            <td class="description last">Current tick for the game</td>
+            <td class="description last"><p>Current tick for the game</p></td>
         </tr>
 
-    
-    </tbody>
+	
+	</tbody>
 </table>
 
-
-
-
-
-
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-126">line 126</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line115">line 115</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="_pickCandidates"><span class="type-signature"></span>_pickCandidates<span class="signature">()</span><span class="type-signature"></span></h4>
-
     
-
-
-
-<div class="description">
-    Decrements cells and collect power candidates
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Decrements cells and collect power candidates
 Each cell contains following values:
      count - Number of power for that cell
      user - Current game user id
@@ -605,122 +817,114 @@ Each cell contains following values:
      candidates - Shows incoming count per user to this cell
          format: [<user>: <count>, ...]
 Each cells will be decremented by <a href="Board.html#_getDecrementOf">Board#_getDecrementOf</a>
-to populate candidates for destination cell
-</div>
+to populate candidates for destination cell</p>
+    </div>
+    
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-149">line 149</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line138">line 138</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="each"><span class="type-signature"></span>each<span class="signature">(board, callback, context)</span><span class="type-signature"></span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Iterates over the board by moving through rows and columns.
+Makes sure context persists</p>
+    </div>
     
 
-
-
-<div class="description">
-    Iterates over the board by moving through rows and columns.
-Makes sure context persists
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
     
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
 
-<table class="params">
+<table class="params table table-striped">
     <thead>
-    <tr>
-        
-        <th>Name</th>
-        
+	<tr>
+		
+		<th>Name</th>
+		
 
-        <th>Type</th>
+		<th>Type</th>
 
-        
+		
 
-        
+		
 
-        <th class="last">Description</th>
-    </tr>
-    </thead>
+		<th class="last">Description</th>
+	</tr>
+	</thead>
 
-    <tbody>
-    
+	<tbody>
+	
 
         <tr>
             
@@ -740,10 +944,10 @@ Makes sure context persists
 
             
 
-            <td class="description last">NxM array of boards</td>
+            <td class="description last"><p>NxM array of boards</p></td>
         </tr>
 
-    
+	
 
         <tr>
             
@@ -763,10 +967,10 @@ Makes sure context persists
 
             
 
-            <td class="description last">Callback function to run for every cell</td>
+            <td class="description last"><p>Callback function to run for every cell</p></td>
         </tr>
 
-    
+	
 
         <tr>
             
@@ -786,200 +990,188 @@ Makes sure context persists
 
             
 
-            <td class="description last">Context within the callback function (this)</td>
+            <td class="description last"><p>Context within the callback function (this)</p></td>
         </tr>
 
-    
-    </tbody>
+	
+	</tbody>
 </table>
 
-
-
-
-
-
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-68">line 68</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line57">line 57</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="getSnapshot"><span class="type-signature"></span>getSnapshot<span class="signature">()</span><span class="type-signature"></span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>TODO</p>
+    </div>
     
 
-
-
-<div class="description">
-    TODO
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-228">line 228</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line217">line 217</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="isOwnerOf"><span class="type-signature"></span>isOwnerOf<span class="signature">(row, col)</span><span class="type-signature"> &rarr; {bool}</span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Determines if current user is the owner of given cell</p>
+    </div>
     
 
-
-
-<div class="description">
-    Determines if current user is the owner of given cell
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
     
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
 
-<table class="params">
+<table class="params table table-striped">
     <thead>
-    <tr>
-        
-        <th>Name</th>
-        
+	<tr>
+		
+		<th>Name</th>
+		
 
-        <th>Type</th>
+		<th>Type</th>
 
-        
+		
 
-        
+		
 
-        <th class="last">Description</th>
-    </tr>
-    </thead>
+		<th class="last">Description</th>
+	</tr>
+	</thead>
 
-    <tbody>
-    
+	<tbody>
+	
 
         <tr>
             
@@ -999,10 +1191,10 @@ Makes sure context persists
 
             
 
-            <td class="description last">Row index of the cell</td>
+            <td class="description last"><p>Row index of the cell</p></td>
         </tr>
 
-    
+	
 
         <tr>
             
@@ -1022,142 +1214,137 @@ Makes sure context persists
 
             
 
-            <td class="description last">Column index of the cell</td>
+            <td class="description last"><p>Column index of the cell</p></td>
         </tr>
 
-    
-    </tbody>
+	
+	</tbody>
 </table>
 
-
-
-
-
-
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-85">line 85</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line74">line 74</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
+    
+    
+    
+    
+    
+    <h5>Returns:</h5>
+    
+            
 <div class="param-desc">
-    Assessment if current user is owner
+    <p>Assessment if current user is owner</p>
 </div>
 
 
 
 <dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
+	<dt>
+		Type
+	</dt>
+	<dd>
+		
 <span class="param-type">bool</span>
 
 
-    </dd>
+	</dd>
 </dl>
 
+
+        
     
-
-
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="move"><span class="type-signature"></span>move<span class="signature">(fy, fx, ty, tx)</span><span class="type-signature"></span></h4>
-
     
-
-
-
-<div class="description">
-    Specifies a move on originating cell as following format:
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Specifies a move on originating cell as following format:
      [<has_move>, <row>, <col>]
-Or removes the move if origin and destination are same
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
+Or removes the move if origin and destination are same</p>
+    </div>
     
 
-<table class="params">
+    
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
     <thead>
-    <tr>
-        
-        <th>Name</th>
-        
+	<tr>
+		
+		<th>Name</th>
+		
 
-        <th>Type</th>
+		<th>Type</th>
 
-        
+		
 
-        
+		
 
-        <th class="last">Description</th>
-    </tr>
-    </thead>
+		<th class="last">Description</th>
+	</tr>
+	</thead>
 
-    <tbody>
-    
+	<tbody>
+	
 
         <tr>
             
@@ -1177,10 +1364,10 @@ Or removes the move if origin and destination are same
 
             
 
-            <td class="description last">Originating column index</td>
+            <td class="description last"><p>Originating column index</p></td>
         </tr>
 
-    
+	
 
         <tr>
             
@@ -1200,10 +1387,10 @@ Or removes the move if origin and destination are same
 
             
 
-            <td class="description last">Originating row index</td>
+            <td class="description last"><p>Originating row index</p></td>
         </tr>
 
-    
+	
 
         <tr>
             
@@ -1223,10 +1410,10 @@ Or removes the move if origin and destination are same
 
             
 
-            <td class="description last">Destination column index</td>
+            <td class="description last"><p>Destination column index</p></td>
         </tr>
 
-    
+	
 
         <tr>
             
@@ -1246,119 +1433,113 @@ Or removes the move if origin and destination are same
 
             
 
-            <td class="description last">Destination row index</td>
+            <td class="description last"><p>Destination row index</p></td>
         </tr>
 
-    
-    </tbody>
+	
+	</tbody>
 </table>
 
-
-
-
-
-
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-98">line 98</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line87">line 87</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="process"><span class="type-signature"></span>process<span class="signature">(tick)</span><span class="type-signature"></span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>Heavy actions to increment and calculate attacks for the board
+It has to run for every tick. Missing one will result sync failure</p>
+    </div>
     
 
-
-
-<div class="description">
-    Heavy actions to increment and calculate attacks for the board
-It has to run for every tick. Missing one will result sync failure
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
     
+    
+    
+    
+    
+        <h5>Parameters:</h5>
+        
 
-<table class="params">
+<table class="params table table-striped">
     <thead>
-    <tr>
-        
-        <th>Name</th>
-        
+	<tr>
+		
+		<th>Name</th>
+		
 
-        <th>Type</th>
+		<th>Type</th>
 
-        
+		
 
-        
+		
 
-        <th class="last">Description</th>
-    </tr>
-    </thead>
+		<th class="last">Description</th>
+	</tr>
+	</thead>
 
-    <tbody>
-    
+	<tbody>
+	
 
         <tr>
             
@@ -1378,156 +1559,147 @@ It has to run for every tick. Missing one will result sync failure
 
             
 
-            <td class="description last">Current tick for the game</td>
+            <td class="description last"><p>Current tick for the game</p></td>
         </tr>
 
-    
-    </tbody>
+	
+	</tbody>
 </table>
 
-
-
-
-
-
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-116">line 116</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line105">line 105</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
         
             
-
-    
-
+<dt>
     <h4 class="name" id="setSnapshot"><span class="type-signature"></span>setSnapshot<span class="signature">()</span><span class="type-signature"></span></h4>
-
+    
+    
+</dt>
+<dd>
+    
+    
+    <div class="description">
+        <p>TODO</p>
+    </div>
     
 
-
-
-<div class="description">
-    TODO
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    
 <dl class="details">
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
+	
 
-    
 
-    
 
-    
+	
+	<dt class="tag-source">Source:</dt>
+	<dd class="tag-source">
+		<ul class="dummy">
+			<li>
+				<a href="Board.js.html">Board.js</a>,
+				 <a href="Board.js.html#sunlight-1-line-219">line 219</a>
+			</li>
+		</ul>
+	</dd>
+	
 
-    
+	
 
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Board.js.html">Board.js</a>, <a href="Board.js.html#line208">line 208</a>
-    </li></ul></dd>
-    
+	
 
-    
-
-    
-
-    
+	
 </dl>
 
+    
+    
 
+    
 
+    
+    
+    
+    
+    
+    
+    
+</dd>
 
-
-
-
-
-
-
-
-
-
-
-
-
-        
+        </dl>
     
 
     
@@ -1540,19 +1712,101 @@ It has to run for every tick. Missing one will result sync failure
 
 
 
-</div>
+				</div>
 
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Board.html">Board</a></li><li><a href="GameEngine.html">GameEngine</a></li><li><a href="GraphBoard.html">GraphBoard</a></li><li><a href="GraphCell.html">GraphCell</a></li><li><a href="Logger.html">Logger</a></li></ul><h3>Global</h3><ul><li><a href="global.html#boardColors">boardColors</a></li><li><a href="global.html#getNeighbours">getNeighbours</a></li><li><a href="global.html#rollbackActions">rollbackActions</a></li></ul>
-</nav>
+				<div class="clearfix"></div>
+				<footer>
+					
+					
+		<span class="copyright">
+		DocStrap Copyright © 2012-2014 The contributors to the JSDoc3 and DocStrap projects.
+		</span>
+					<br />
+					
+		<span class="jsdoc-message">
+		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a>
+		on Sat Oct 3rd 2015 using the <a
+			href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
+		</span>
+				</footer>
+			</div>
 
-<br class="clear">
+			
+			<div class="span3">
+				<div id="toc"></div>
+			</div>
+			
+			<br clear="both">
+		</div>
 
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.2</a> on Wed Sep 02 2015 20:40:23 GMT+0900 (ULAST)
-</footer>
+	</div>
+	<!--<script src="scripts/sunlight.js"></script>-->
+	<script src="scripts/docstrap.lib.js"></script>
+	<script src="scripts/bootstrap-dropdown.js"></script>
+	<script src="scripts/toc.js"></script>
 
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
+	<script>
+		$( function () {
+			$( "[id*='$']" ).each( function () {
+				var $this = $( this );
+
+				$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+			} );
+
+			$( "#toc" ).toc( {
+				anchorName  : function ( i, heading, prefix ) {
+					return $( heading ).attr( "id" ) || ( prefix + i );
+				},
+				selectors   : "h1,h2,h3,h4",
+				showAndHide : false,
+				scrollTo    : "100px"
+			} );
+
+			$( "#toc>ul" ).addClass( "nav nav-pills nav-stacked" );
+			$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+			$( '.dropdown-toggle' ).dropdown();
+//			$( ".tutorial-section pre, .readme-section pre" ).addClass( "sunlight-highlight-javascript" ).addClass( "linenums" );
+
+			$( ".tutorial-section pre, .readme-section pre" ).each( function () {
+				var $this = $( this );
+
+				var example = $this.find( "code" );
+				exampleText = example.html();
+				var lang = /{@lang (.*?)}/.exec( exampleText );
+				if ( lang && lang[1] ) {
+					exampleText = exampleText.replace( lang[0], "" );
+					example.html( exampleText );
+					lang = lang[1];
+				} else {
+					lang = "javascript";
+				}
+
+				if ( lang ) {
+
+					$this
+						.addClass( "sunlight-highlight-" + lang )
+						.addClass( "linenums" )
+						.html( example.html() );
+
+				}
+			} );
+
+			Sunlight.highlightAll( {
+				lineNumbers : true,
+				showMenu : true,
+				enableDoclinks : true
+			} );
+		} );
+	 </script>
+
+
+
+	<!--Navigation and Symbol Display-->
+	
+
+
+	<!--Google Analytics-->
+	
+
 </body>
 </html>

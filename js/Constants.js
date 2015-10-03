@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-
+/** @global */
 var Constants = {
     cellRadius: 30,
     nonSelectForSVG:

@@ -1,0 +1,43 @@
+{
+    "tags": {
+        "allowUnknownTags": true
+    },
+    "source": {
+        "include": ["js", "README.md"],
+        "exclude": ["js/lib"],
+        "includePattern": ".+\\.js(doc)?$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "plugins": [
+        "plugins/markdown"
+    ],
+    "templates" : {
+        "cleverLinks"           : false,
+        "monospaceLinks"        : false,
+        "dateFormat"            : "ddd MMM Do YYYY",
+        "outputSourceFiles"     : true,
+        "outputSourcePath"      : true,
+        "systemName"            : "DocStrap",
+        "footer"                : "",
+        "copyright"             : "DocStrap Copyright © 2012-2014 The contributors to the JSDoc3 and DocStrap projects.",
+        "navType"               : "vertical",
+        "theme"                 : "spacelab",
+        "linenums"              : true,
+        "collapseSymbols"       : false,
+        "inverseNav"            : true,
+        "highlightTutorialCode" : true,
+        "protocol": "fred://",
+        "default": {
+            "outputSourceFiles": true
+        }
+    },
+    "markdown"  : {
+        "parser"   : "gfm",
+        "hardwrap" : true
+    },
+    "opts": {
+        "template": "node_modules/ink-docstrap/template",
+        "destination": "doc",
+        "recurse": true
+    }
+}

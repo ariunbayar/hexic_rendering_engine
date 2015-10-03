@@ -13,13 +13,14 @@ var GraphBoard = Backbone.Model.extend(
             // mostly static properties. Set at init time
             boardOffset: {
                 x: 2 * Constants.cellRadius * sin60,
-                y: 2 * Constants.cellRadius * sin60 * sin60,
+                y: 2 * Constants.cellRadius * sin60 * sin60
             },
             board: null,
             /**
              * Available colors for the board
              *     0..N - Colors for users. Includes neutral user
              *     background - Background color for this board
+             * @memberof GraphBoard
              */
             boardColors: null,
             cells: [],
@@ -330,7 +331,9 @@ var GraphBoard = Backbone.Model.extend(
             });
         }
     }
-}, {
+},
+/** @lends GraphBoard */
+{
 
     rollbackQueue: [],
     /**

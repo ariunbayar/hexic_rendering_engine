@@ -4,7 +4,7 @@ module.exports = (grunt) ->
       livereload:
         options:
           livereload: true
-        files: ['index.html', 'css/*', 'js/*.js', 'js/compiled/*']
+        files: ['index.html', 'css/*', 'js/*.js']
       jshint:
         tasks: 'jshint'
         files: ['js/*.js', '!js/test.js']

@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>DocStrap Source: Logger.js</title>
+	<title>DocStrap Classes</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -72,81 +72,104 @@
 	<div class="row-fluid">
 
 		
-			<div class="span12">
-				
+		<div class="span8">
+			
 				<div id="main">
 					
 
 
-		<h1 class="page-title">Source: Logger.js</h1>
-    
+	<h1 class="page-title">Classes</h1>
 <section>
-	<article>
-		<pre
-			class="sunlight-highlight-javascript linenums">(function(){
-'use strict';
-/* globals d3, _ */
-/* globals Backbone */
 
-var Logger = Backbone.Model.extend(
-/** @lends Logger.prototype */
-{
-    defaults: function(){
-        return {
-            element: null,
-            logs: [],
-            maxLogsToHold: 3
-        };
-    },
+<header>
+    <h2>
+    
+    </h2>
+    
+</header>
 
-    /**
-     * Creates holder for logging within specified container
-     * @classdesc Logs above game board to show some technical messages
-     * @constructs
-     * @augments Backbone.Model
-     * @param {string} containerId Container id for d3.select()
-     * @return {Logger} Newly created logger object.
-     */
-    initialize: function(containerId){
-        var container = d3.select(containerId),
-            oldContainerStyle = container.attr('style'),
-            loggerEl, logger;
-        container.attr('style', 'position: relative;' + oldContainerStyle);
+<article>
+    <div class="container-overview">
+    
 
-        loggerEl = container.append('div');
-        loggerEl.attr('style', 'position:absolute; top:0; right:0;');
-        this.set('element', loggerEl);
+    
+        
 
-        _.bindAll(this, 'log');
+        
+<dl class="details">
+	
 
-        return this;
-    },
+	
 
-    /**
-     * Logs message to its logger element
-     * @param {string} msg The message to log
-     */
-    log: function(msg){
-        var loggerEl = this.get('element'),
-            log = loggerEl.append('div'),
-            logs = this.get('logs');
+	
 
-        log.html(msg);
-        logs.push(log);
-        if (logs.length > this.get('maxLogsToHold')){
-            logs.shift().remove();
-        }
-    }
+	
 
-});
-window.Logger = Logger;
+	
+
+	
+
+	
+
+	
+
+	
 
 
-})();
-</pre>
-	</article>
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="Board.html">Board</a></dt>
+            <dd></dd>
+        
+            <dt><a href="GameEngine.html">GameEngine</a></dt>
+            <dd></dd>
+        
+            <dt><a href="GraphBoard.html">GraphBoard</a></dt>
+            <dd></dd>
+        
+            <dt><a href="GraphCell.html">GraphCell</a></dt>
+            <dd></dd>
+        
+            <dt><a href="Logger.html">Logger</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
 </section>
-
 
 
 
@@ -170,6 +193,10 @@ window.Logger = Logger;
 				</footer>
 			</div>
 
+			
+			<div class="span3">
+				<div id="toc"></div>
+			</div>
 			
 			<br clear="both">
 		</div>

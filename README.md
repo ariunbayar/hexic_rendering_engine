@@ -13,7 +13,7 @@ Prepare a release with following command::
 
 Build docs as follows::
 
-    jsdoc ./js -d ./doc/
+    ./node_modules/.bin/jsdoc -c ./jsdoc.conf.json
 
 Credits
 =======

@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>DocStrap Source: Logger.js</title>
+	<title>DocStrap Source: Constants.js</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -78,68 +78,40 @@
 					
 
 
-		<h1 class="page-title">Source: Logger.js</h1>
+		<h1 class="page-title">Source: Constants.js</h1>
     
 <section>
 	<article>
 		<pre
 			class="sunlight-highlight-javascript linenums">(function(){
 'use strict';
-/* globals d3, _ */
-/* globals Backbone */
 
-var Logger = Backbone.Model.extend(
-/** @lends Logger.prototype */
-{
-    defaults: function(){
-        return {
-            element: null,
-            logs: [],
-            maxLogsToHold: 3
-        };
-    },
+/** @global */
+var Constants = {
+    cellRadius: 30,
+    nonSelectForSVG:
+        '-webkit-user-select: none;' +
+        '-moz-user-select: none;' +
+        '-ms-user-select: none;' +
+        '-o-user-select: none;' +
+        'user-select: none;',
+    hexagon:
+        'M -4,-26.57 -21,-16.77 C -23.41,-15.37 -24.99,-12.63 -25,-9.84 ' +
+        'L -25,9.79 C -24.99,12.57 -23.41,15.31 -21,16.71 ' +
+        'L -4,26.54 C -1.58,27.91 1.58,27.91 4,26.54 ' +
+        'L 21,16.7 C 23.41,15.31 25,12.58 25,9.79 ' +
+        'L 25,-9.85 C 25,-12.64 23.42,-15.37 21,-16.77 ' +
+        'L 4,-26.57 C 1.39,-27.93 -1.62,-27.92 -4,-26.57 z',
+    //arrow:
+    //    'm 36.29,-0.024 c -0.005,-0.333 -0.144,-0.663 -0.38,-0.9 ' +
+    //    'L 32.22,-4.614 c -0.729,-0.704 -2.202,-0.093 -2.22,0.92 ' +
+    //    'l 0,7.39 c 0.024,1.006 1.479,1.611 2.21,0.92 ' +
+    //    'L 35.9,0.925 c 0.244,-0.246 0.396,-0.596 0.391,-0.943 z',
+    arrow: 'M 0,0 50,0',
+    tmpArrow: '30,0 20,10 25,0 20,-10 30,0'
+};
 
-    /**
-     * Creates holder for logging within specified container
-     * @classdesc Logs above game board to show some technical messages
-     * @constructs
-     * @augments Backbone.Model
-     * @param {string} containerId Container id for d3.select()
-     * @return {Logger} Newly created logger object.
-     */
-    initialize: function(containerId){
-        var container = d3.select(containerId),
-            oldContainerStyle = container.attr('style'),
-            loggerEl, logger;
-        container.attr('style', 'position: relative;' + oldContainerStyle);
-
-        loggerEl = container.append('div');
-        loggerEl.attr('style', 'position:absolute; top:0; right:0;');
-        this.set('element', loggerEl);
-
-        _.bindAll(this, 'log');
-
-        return this;
-    },
-
-    /**
-     * Logs message to its logger element
-     * @param {string} msg The message to log
-     */
-    log: function(msg){
-        var loggerEl = this.get('element'),
-            log = loggerEl.append('div'),
-            logs = this.get('logs');
-
-        log.html(msg);
-        logs.push(log);
-        if (logs.length > this.get('maxLogsToHold')){
-            logs.shift().remove();
-        }
-    }
-
-});
-window.Logger = Logger;
+window.Constants = Constants;
 
 
 })();
