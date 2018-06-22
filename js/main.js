@@ -13,7 +13,7 @@
   userId = location.hash.substr(1);
 
   urlto = function(uri) {
-    return 'http://localhost:80/hexic_srv/' + uri + '?user_id=' + userId;
+    return 'http://' + (location.hostname || '0.0.0.0') + ':80/hexic_srv/' + uri + '?user_id=' + userId;
   };
 
   d3.json(urlto('start.php'), function(error, boardData) {

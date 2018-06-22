@@ -1,5 +1,5 @@
 #!/bin/sh
-dir='/var/www/hexic_rendering_engine/'
+dir='/var/www/hexic_rendering_engine'
 
 
 # Load livereload
