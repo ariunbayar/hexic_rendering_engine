@@ -13,10 +13,10 @@
   userId = location.hash.substr(1);
 
   urlto = function(uri) {
-    return 'http://' + (location.hostname || '0.0.0.0') + ':80/hexic_srv/' + uri + '?user_id=' + userId;
+    return 'http://' + (location.hostname || '0.0.0.0') + ':8001/game/' + uri + '/?user_id=' + userId;
   };
 
-  d3.json(urlto('start.php'), function(error, boardData) {
+  d3.json(urlto('start'), function(error, boardData) {
     var cb, gameEngine;
     if (error) {
       return console.log(error);
@@ -29,14 +29,14 @@
     gameEngine.onMoveTrigger(function() {
       var data;
       data = JSON.stringify(Array.prototype.slice.call(arguments));
-      return d3.json(urlto('move.php')).post(data);
+      return d3.json(urlto('move')).post(data);
     }, this);
     gameEngine.start();
     cb = function(error, rsp) {
       if (rsp && rsp.responseText !== 'noop') {
         gameEngine.moveReceived.apply(gameEngine, JSON.parse(rsp.responseText));
       }
-      return d3.xhr(urlto('get_pending_move.php'), 'text/plain', cb);
+      return d3.xhr(urlto('get-pending-move'), 'text/plain', cb);
     };
     return cb();
   });

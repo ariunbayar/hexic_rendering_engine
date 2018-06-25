@@ -43,7 +43,7 @@ var GameEngine = Backbone.Model.extend(
      *      boardData.board - The board itself<br>
      *      boardData.width - Maximum row size<br>
      *      boardData.height - Number of row the board spans<br>
-     *      boardData.userId - Current user id as in boardData.board<br>
+     *      boardData.user_id - Current user id as in boardData.board<br>
      *      boardData.colors - Available colors for the board<br>
      *          0..N - Colors for users. Includes neutral user
      *          background - Background color for this board
@@ -51,18 +51,18 @@ var GameEngine = Backbone.Model.extend(
     initialize: function(attributes, options){
         var board = new Board({
             cells : options.boardData.board,
-            userId: options.boardData.userId
+            userId: options.boardData.user_id
         });
         var graphic = new GraphBoard(
             {board: board, boardColors: options.boardData.colors},
             {containerId: options.containerId,
              width: options.boardData.width,
              height: options.boardData.height,
-             userId: options.boardData.userId}
+             userId: options.boardData.user_id}
         );
         this.set('graphic', graphic);
         this.set('board', board);
-        this.set('userId', options.boardData.userId);
+        this.set('userId', options.boardData.user_id);
         this.set('logger', graphic.getLogger());
         this.set('timeStarted', +new Date());
     },
