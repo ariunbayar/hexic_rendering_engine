@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<h1>Draw hexagon</h1>
+<canvas id="canvas" width="800px" height="300px"></canvas>
+
+<table>
+    <tr>
+        <td> X1, Y1 </td>
+        <td> <input type="number" value="150" id="x1"> X <input type="number" value="100" id="y1"/> </td>
+    </tr>
+    <tr>
+        <td> Radius </td>
+        <td> <input type="number" value="29" id="radius"> </td>
+    </tr>
+    <tr>
+        <td> Corner radius </td>
+        <td> <input type="number" value="10" id="rcorner"> </td>
+    </tr>
+    <tr>
+        <td> Space X, Y </td>
+        <td> <input type="number" value="53" id="ox"> X <input type="number" value="46" id="oy"/> </td>
+    </tr>
+    <tr>
+        <td> Color </td>
+        <td> <input type="text" value="#9fbbc1" id="color"> </td>
+    </tr>
+</table>
+
+<script src="js/lodash.min.js" type=""="text/javascript" charset="utf-8"></script>
+<script src="js/createjs-2015.11.26.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/draw_hexagon.js" type=""="text/javascript" charset="utf-8"></script>
+
+
+</body>
+</html>
