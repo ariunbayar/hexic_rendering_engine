@@ -90,10 +90,9 @@ function redraw() {
         for (var x = 0; x < 5; x++) {
             var k = y % 2 ? 0 : ox / 2;
             drawHexagon(x * ox + radius + k, y * oy + radius, radius, cornerRadius, color);
+            dotAt(x * ox + radius + k, y * oy + radius);
         }
     }
-
-    //drawHexagon(x1, y1, radius, cornerRadius);
 
 }
 
